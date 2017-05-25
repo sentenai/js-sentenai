@@ -1,0 +1,25 @@
+{
+  "name": "sentenai",
+  "version": "0.0.1",
+  "description": "Javascript client for Sentenai",
+  "main": "sentenai.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sentenai/js-sentenai.git"
+  },
+  "keywords": [
+    "sentenai",
+    "tsdb",
+    "timeseries",
+    "database"
+  ],
+  "author": "Sentenai, Inc.",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/sentenai/js-sentenai/issues"
+  },
+  "homepage": "https://github.com/sentenai/js-sentenai#readme"
+}
