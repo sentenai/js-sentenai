@@ -1,6 +1,5 @@
-
-var api = require('./api.js');
-var flare = require('./flare.js');
+const api = require('./api.js');
+const flare = require('./flare.js');
 
 module.exports = {
   'Client': api,

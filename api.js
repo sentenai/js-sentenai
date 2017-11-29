@@ -1,6 +1,5 @@
 require('es6-shim');
-
-var https = require('https');
+const https = require('https');
 
 // var SentenaiException = function () { };
 

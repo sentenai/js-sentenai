@@ -7,7 +7,7 @@ try {
 
 var FlareException = function () { };
 
-var mkCondTree = function (stream, path, cond) {
+function mkCondTree (stream, path, cond) {
   if (cond instanceof AnyCmp) {
     let alts = [];
     for (let i = 0; i < cond.vals.length; i++) {
@@ -25,9 +25,9 @@ var mkCondTree = function (stream, path, cond) {
   } else {
     return new Cond(path, '==', cond, stream);
   }
-};
+}
 
-var mkSpans = function (stream, conds, path) {
+function mkSpans (stream, conds, path) {
   if (typeof path === 'undefined') { path = []; }
   var ands = [];
   for (var key in conds) {
@@ -57,7 +57,7 @@ var mkSpans = function (stream, conds, path) {
   } else {
     return new And(ands);
   }
-};
+}
 
 class Select {
   constructor (serial, start, end) {
