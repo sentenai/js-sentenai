@@ -1,9 +1,8 @@
 require('es6-shim');
 
 var https = require('https');
-var http = require('http');
 
-var SentenaiException = function () { };
+// var SentenaiException = function () { };
 
 class QueryResult {
   constructor (client, spans) {
@@ -42,7 +41,7 @@ class QueryResult {
           path: '/query/' + c,
           method: 'GET',
           headers: {
-            'auth-key': this.auth_key,
+            'auth-key': this.client.auth_key,
             'Content-Type': 'application/json'
           }
         }, function (response) {
@@ -114,10 +113,5 @@ class Client {
     });
   }
 }
-
-var Sentenai = function (api_key) {
-  var my = {};
-  return my;
-};
 
 module.exports = Client;

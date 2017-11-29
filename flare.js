@@ -1,23 +1,22 @@
 require('es6-shim');
 
+var moment;
 try {
-  var moment = require('moment-timezone');
-} catch (err) {
-  var moment;
-}
+  moment = require('moment-timezone');
+} catch (err) {}
 
 var FlareException = function () { };
 
 var mkCondTree = function (stream, path, cond) {
   if (cond instanceof AnyCmp) {
-    var alts = [];
-    for (var i = 0; i < cond.vals.length; i++) {
+    let alts = [];
+    for (let i = 0; i < cond.vals.length; i++) {
       alts.push(mkCondTree(stream, path, cond.vals[i]));
     }
     return new Or(alts);
   } else if (cond instanceof AllCmp) {
-    var alts = [];
-    for (var i = 0; i < cond.vals.length; i++) {
+    let alts = [];
+    for (let i = 0; i < cond.vals.length; i++) {
       alts.push(mkCondTree(stream, path, cond.vals[i]));
     }
     return new And(alts);
@@ -29,7 +28,7 @@ var mkCondTree = function (stream, path, cond) {
 };
 
 var mkSpans = function (stream, conds, path) {
-  if (path == undefined) { path = []; }
+  if (typeof path === 'undefined') { path = []; }
   var ands = [];
   for (var key in conds) {
     var p = path.slice();
@@ -51,9 +50,9 @@ var mkSpans = function (stream, conds, path) {
         ands.push(new Cond(p, '==', val, stream));
     }
   }
-  if (ands.length == 0) {
+  if (ands.length === 0) {
     throw FlareException('`*` not supported yet');
-  } else if (ands.length == 1) {
+  } else if (ands.length === 1) {
     return ands[0];
   } else {
     return new And(ands);
@@ -93,7 +92,7 @@ class Delta {
   get ast () {
     var d = {};
     for (let key in this) {
-      if (this[key] != undefined) {
+      if (typeof this[key] !== 'undefined') {
         d[key] = this[key];
       }
     }
@@ -204,6 +203,7 @@ class Width {
 
   get ast () {
     var c = this.cond.ast;
+    // TODO: min/max are instances of Delta, this comparison will always fail
     if (this.min && this.max && this.min === this.max) {
       c['for'] = this.min.ast;
     } else {
@@ -283,7 +283,7 @@ class Cond {
       'op': this.op,
       'arg': {'type': t, 'val': this.value}
     };
-    if (this.stream != undefined) {
+    if (typeof this.stream !== 'undefined') {
       c['stream'] = this.stream.ast;
       c['type'] = 'span';
     }
@@ -314,9 +314,9 @@ var Flare = {};
 
 Flare.select = function (start, end) {
   return function () {
-    if (arguments.length == 0) {
+    if (arguments.length === 0) {
       throw FlareException('select * not supported yet');
-    } else if (arguments.length == 1) {
+    } else if (arguments.length === 1) {
       return new Select(arguments[0], start, end);
     } else {
       return new Select(new Serial(Array.from(arguments)), start, end);
@@ -339,14 +339,14 @@ Flare.stream = function (args) {
   return function () {
     if (arguments.length < 1) {
       throw new FlareException("can't bind stream to nothing");
-    } else if (arguments.length == 1) {
+    } else if (arguments.length === 1) {
       /* SPAN */
       return mkSpans(new Stream(name), arguments[0], ['event']);
     } else {
       throw FlareException('switches not supported yet');
       /* SWITCH */
     }
-    new Stream(name);
+    // new Stream(name);
   };
 };
 
@@ -356,9 +356,9 @@ Flare.all = function () { return new All(Array.from(arguments)); };
 
 /* versatile functions */
 Flare.and = function () {
-  if (arguments.length == 0) {
+  if (arguments.length === 0) {
     throw new FlareException('and cannot have zero arguments');
-  } else if (arguments.length == 1) {
+  } else if (arguments.length === 1) {
     return arguments[0];
   } else if (arguments[0] instanceof Cond) {
     return new And(Array.from(arguments));
@@ -372,9 +372,9 @@ Flare.and = function () {
 };
 
 Flare.or = function () {
-  if (arguments.length == 0) {
+  if (arguments.length === 0) {
     throw new FlareException('and cannot have zero arguments');
-  } else if (arguments.length == 1) {
+  } else if (arguments.length === 1) {
     return arguments[0];
   } else if (arguments[0] instanceof Cond) {
     return new Or(Array.from(arguments));
@@ -398,7 +398,7 @@ Flare.eq = function (val) { return new Cmp('==', val); };
 /* time related functions */
 Flare.utc = function (Y, m, d, H, M, S) { return new Date(Y, m || 1, d || 1, H || 0, M || 0, S || 0); };
 Flare.tz = function (tz) {
-  if (moment != undefined) {
+  if (typeof moment !== 'undefined') {
     return function (Y, m, d, H, M, S) {
       return moment(new Date(Y, m || 1, d || 1, H || 0, M || 0, S || 0)).tz(tz);
     };
