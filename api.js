@@ -1,19 +1,17 @@
 require('es6-shim');
+const https = require('https');
 
-var https = require('https');
-var http  = require('http');
-
-var SentenaiException = function () { }
+// var SentenaiException = function () { };
 
 class QueryResult {
-  constructor(client, spans) {
+  constructor (client, spans) {
     this.client = client;
     this.spans = spans;
   }
 
-  get stats() {
-    var max = undefined;
-    var min = undefined;
+  get stats () {
+    var max;
+    var min;
     var tot = 0;
     var dts = [];
     for (var i = 0; i < this.spans.length; i++) {
@@ -28,26 +26,26 @@ class QueryResult {
       mean: tot / dts.length,
       min: min,
       max: max,
-      median: dts.sort()[Math.floor(dts.length/2)]
-    }
+      median: dts.sort()[Math.floor(dts.length / 2)]
+    };
   }
 
-  spans(resolve, reject) {
+  spans (resolve, reject) {
     const ps = [];
     for (var i = 0; i < this.spans.length; i++) {
       var c = this.spans[i].cursor;
-      var p = new Promise(function(resolve, reject) {
+      var p = new Promise(function (resolve, reject) {
         var req = this.protocol.request({
           hostname: this.host,
           path: '/query/' + c,
           method: 'GET',
           headers: {
-            'auth-key': this.auth_key,
+            'auth-key': this.client.auth_key,
             'Content-Type': 'application/json'
           }
-        }, function(response) {
-          response.on("data", function(chunk) { body.push(chunk); });
-          response.on("end", function() {
+        }, function (response) {
+          response.on('data', function (chunk) { body.push(chunk); });
+          response.on('end', function () {
             const events = JSON.parse(body.join());
             return {s: this.spans[i].start, e: this.spans[i].end, evts: events};
           });
@@ -67,24 +65,22 @@ class QueryResult {
           var evt = segments[i].events[j];
           slice[evt.stream].events.push(evt.event);
         }
-        slices.push({streams: slice, start: sp.s, end: sp.e})
-
+        slices.push({streams: slice, start: sp.s, end: sp.e});
       }
       resolve(slices);
     });
-
   }
 }
 
 class Client {
-  constructor(config) {
+  constructor (config) {
     this.auth_key = config.auth_key;
-    this.protocol = https
-    this.host = "api.senten.ai"
+    this.protocol = https;
+    this.host = 'api.senten.ai';
   }
-  
-  query(q) {
-    return new Promise(function(resolve, reject) {
+
+  query (q) {
+    return new Promise(function (resolve, reject) {
       const body = [];
       const req = this.protocol.request({
         hostname: this.host,
@@ -94,9 +90,9 @@ class Client {
           'auth-key': this.auth_key,
           'Content-Type': 'application/json'
         }
-      }, function(response) {
-        response.on("data", function(chunk) { body.push(chunk); });
-        response.on("end", function() {
+      }, function (response) {
+        response.on('data', function (chunk) { body.push(chunk); });
+        response.on('end', function () {
           var rspans = JSON.parse(body.join());
           var spans = [];
           for (var i = 0; i < rspans.length; i++) {
@@ -104,35 +100,17 @@ class Client {
               'start': new Date(rspans[i].start),
               'end': new Date(rspans[i].end),
               'cursor': rspans[i].cursor
-            })
+            });
           }
           resolve(new QueryResult(spans));
         });
       });
 
-      req.on("error", function(err) { reject(err) });
+      req.on('error', function (err) { reject(err); });
       req.write(JSON.stringify(q.ast));
       req.end();
-
     });
   }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-var Sentenai = function(api_key) {
-  var my = {};
-  return my;
-};
 
 module.exports = Client;
