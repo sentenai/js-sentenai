@@ -4,7 +4,8 @@
   "description": "Javascript client for Sentenai",
   "main": "sentenai.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "semistandard"
   },
   "repository": {
     "type": "git",
@@ -24,5 +25,8 @@
   "homepage": "https://github.com/sentenai/js-sentenai#readme",
   "dependencies": {
     "es6-shim": "^0.35.3"
+  },
+  "devDependencies": {
+    "semistandard": "^11.0.0"
   }
 }

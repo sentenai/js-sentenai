@@ -3,9 +3,9 @@ var sentenai = require('./sentenai.js');
 
 var $ = sentenai.flare;
 
-var client = new sentenai.Client({auth_key: ""});
+var client = new sentenai.Client({auth_key: ''});
 
-var bos = $.stream({name: "weather-daily-boston"});
+var bos = $.stream({name: 'weather-daily-boston'});
 
 console.log($.ast(
   $.select()(
