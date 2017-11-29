@@ -1,2 +1,8 @@
 # js-sentenai
-Standalone Javascript client for Sentenai
+
+> Standalone JavaScript client for Sentenai
+
+```shell
+$ npm install sentenai
+```
+
