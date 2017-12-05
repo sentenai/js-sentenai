@@ -124,7 +124,7 @@ class Serial {
   get ast () {
     return {
       'type': 'serial',
-      'conds': this.sequence.map(function (a) { return a.ast; })
+      'conds': this.sequence.map(a => a.ast)
     };
   }
 }
@@ -143,7 +143,7 @@ class Any {
   get ast () {
     return {
       'type': 'any',
-      'conds': this.conds.map(function (a) { return a.ast; })
+      'conds': this.conds.map(a => a.ast)
     };
   }
 }
@@ -162,7 +162,7 @@ class All {
   get ast () {
     return {
       'type': 'any',
-      'conds': this.conds.map(function (a) { return a.ast; })
+      'conds': this.conds.map(a => a.ast)
     };
   }
 }
@@ -221,7 +221,7 @@ class And {
   get ast () {
     return {
       'type': '&&',
-      'conds': this.conds.map(function (a) { return a.ast; })
+      'conds': this.conds.map(a => a.ast)
     };
   }
   after (delta) { return new Spacing(this, new Delta(delta)); }
@@ -238,7 +238,7 @@ class Or {
   get ast () {
     return {
       'type': '||',
-      'conds': this.conds.map(function (a) { return a.ast; })
+      'conds': this.conds.map(a => a.ast)
     };
   }
   after (delta) { return new Spacing(this, new Delta(delta)); }
