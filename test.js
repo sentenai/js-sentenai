@@ -1,4 +1,4 @@
-var sentenai = require('./sentenai.js');
+var sentenai = require('./');
 var $ = sentenai.flare;
 
 // var client = new sentenai.Client({auth_key: ''});
