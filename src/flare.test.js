@@ -1,6 +1,6 @@
 /* global test, expect */
 var { flare } = require('../');
-var { stream, select, ast, lt, gt, gte, ne, or, all, any } = flare;
+var { stream, select, ast, lt, gte, gt, ne, or, all, any } = flare;
 
 const astObj = a => JSON.parse(ast(a));
 
@@ -189,3 +189,92 @@ test('or', () => {
     }
   });
 });
+
+// TODO: figure out what AnyCmp represents and why `or()` doesn't always return an Or.
+test.skip('relative span', () => {
+  const s = stream('s');
+  const t = stream('t');
+
+  expect(astObj(
+    select()(
+      or(
+        s({ x: true }).min({ years: 1, months: 1 }),
+        t({ x: true }).after({ minutes: 11 }).within({ seconds: 13 })
+      ).max({ weeks: 1 })
+    )
+  )).toEqual({
+    select: {
+      expr: '||',
+      args: [
+        {
+          type: 'span',
+          op: '==',
+          stream: {name: 's'},
+          path: ['event', 'x'],
+          arg: {type: 'bool', val: true},
+          for: { 'at-least': { years: 1, months: 1 } }
+        },
+        {
+          type: 'span',
+          op: '==',
+          stream: {name: 't'},
+          path: ['event', 'x'],
+          arg: {type: 'bool', val: true},
+          after: {minutes: 11},
+          within: {seconds: 13}
+        }
+      ],
+      for: { 'at-most': { weeks: 1 } }
+    }
+  });
+});
+
+test('nested relative spans', () => {
+  const s = stream('S');
+
+  expect(astObj(
+    select()(
+      s({ x: lt(0) }).then(
+        s({ x: 0 }).then(
+          s({ x: gt(0) }).within({ seconds: 1 })
+        ).within({ seconds: 2 })
+      )
+    )
+  )).toEqual({
+    select: {
+      type: 'serial',
+      conds: [
+        {
+          type: 'span',
+          op: '<',
+          stream: {name: 'S'},
+          path: ['event', 'x'],
+          arg: {type: 'int', val: 0}
+        },
+        {
+          type: 'serial',
+          conds: [
+            {
+              type: 'span',
+              op: '==',
+              stream: {name: 'S'},
+              path: ['event', 'x'],
+              arg: {type: 'int', val: 0}
+            },
+            {
+              type: 'span',
+              op: '>',
+              stream: {name: 'S'},
+              path: ['event', 'x'],
+              arg: {type: 'int', val: 0},
+              within: {seconds: 1}
+            }
+          ],
+          within: {seconds: 2}
+        }
+      ]
+    }
+  });
+});
+
+// TODO: test('stream filters', () => {})
