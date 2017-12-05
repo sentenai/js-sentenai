@@ -7,17 +7,17 @@ try {
 
 var FlareException = function () { };
 
-function mkCondTree (stream, path, cond) {
+function makeCondTree (stream, path, cond) {
   if (cond instanceof AnyCmp) {
     let alts = [];
     for (let i = 0; i < cond.vals.length; i++) {
-      alts.push(mkCondTree(stream, path, cond.vals[i]));
+      alts.push(makeCondTree(stream, path, cond.vals[i]));
     }
     return new Or(alts);
   } else if (cond instanceof AllCmp) {
     let alts = [];
     for (let i = 0; i < cond.vals.length; i++) {
-      alts.push(mkCondTree(stream, path, cond.vals[i]));
+      alts.push(makeCondTree(stream, path, cond.vals[i]));
     }
     return new And(alts);
   } else if (cond instanceof Cmp) {
@@ -27,7 +27,7 @@ function mkCondTree (stream, path, cond) {
   }
 }
 
-function mkSpans (stream, conds, path) {
+function makeSpans (stream, conds, path) {
   if (typeof path === 'undefined') { path = []; }
   var ands = [];
   for (var key in conds) {
@@ -39,11 +39,11 @@ function mkSpans (stream, conds, path) {
         if (val instanceof Cmp) {
           ands.push(new Cond(p, val.op, val.val, stream));
         } else if (val instanceof AnyCmp) {
-          ands.push(mkCondTree(stream, p, val));
+          ands.push(makeCondTree(stream, p, val));
         } else if (val instanceof AllCmp) {
-          ands.push(mkCondTree(stream, p, val));
+          ands.push(makeCondTree(stream, p, val));
         } else {
-          ands.push(mkSpans(stream, val, p));
+          ands.push(makeSpans(stream, val, p));
         }
         break;
       default:
@@ -341,7 +341,7 @@ Flare.stream = function (args) {
       throw new FlareException("can't bind stream to nothing");
     } else if (arguments.length === 1) {
       /* SPAN */
-      return mkSpans(new Stream(name), arguments[0], ['event']);
+      return makeSpans(new Stream(name), arguments[0], ['event']);
     } else {
       throw FlareException('switches not supported yet');
       /* SWITCH */
