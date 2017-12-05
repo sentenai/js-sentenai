@@ -170,8 +170,8 @@ class All {
 class Spacing {
   constructor (cond, after, within) {
     this.cond = cond;
-    this.after = after;
-    this.within = within;
+    this._after = after;
+    this._within = within;
   }
 
   after (delta) { return new Spacing(this, new Delta(delta)); }
@@ -182,8 +182,8 @@ class Spacing {
 
   get ast () {
     var c = this.cond.ast;
-    if (this.after) { c['after'] = this.after.ast; }
-    if (this.within) { c['within'] = this.within.ast; }
+    if (this._after) { c['after'] = this._after.ast; }
+    if (this._within) { c['within'] = this._within.ast; }
     return c;
   }
 }
@@ -191,8 +191,8 @@ class Spacing {
 class Width {
   constructor (cond, min, max) {
     this.cond = cond;
-    this.min = min;
-    this.max = max;
+    this._min = min;
+    this._max = max;
   }
 
   after (delta) { return new Spacing(this, new Delta(delta)); }
@@ -204,11 +204,11 @@ class Width {
   get ast () {
     var c = this.cond.ast;
     // TODO: min/max are instances of Delta, this comparison will always fail
-    if (this.min && this.max && this.min === this.max) {
-      c['for'] = this.min.ast;
+    if (this._min && this._max && this._min === this._max) {
+      c['for'] = this._min.ast;
     } else {
-      if (this.min) { c['for'] = {'at-least': this.min.ast}; }
-      if (this.max) { c['for'] = {'at-most': this.max.ast}; }
+      if (this._min) { c['for'] = {'at-least': this._min.ast}; }
+      if (this._max) { c['for'] = {'at-most': this._max.ast}; }
     }
     return c;
   }
