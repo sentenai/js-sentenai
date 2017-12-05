@@ -161,7 +161,7 @@ class All {
 
   get ast () {
     return {
-      'type': 'any',
+      'type': 'all',
       'conds': this.conds.map(a => a.ast)
     };
   }
@@ -220,8 +220,8 @@ class And {
   }
   get ast () {
     return {
-      'type': '&&',
-      'conds': this.conds.map(a => a.ast)
+      expr: '&&',
+      args: this.conds.map(a => a.ast)
     };
   }
   after (delta) { return new Spacing(this, new Delta(delta)); }
@@ -237,8 +237,8 @@ class Or {
   }
   get ast () {
     return {
-      'type': '||',
-      'conds': this.conds.map(a => a.ast)
+      expr: '||',
+      args: this.conds.map(a => a.ast)
     };
   }
   after (delta) { return new Spacing(this, new Delta(delta)); }
