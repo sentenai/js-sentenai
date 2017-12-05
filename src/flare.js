@@ -373,7 +373,7 @@ Flare.and = function () {
 
 Flare.or = function () {
   if (arguments.length === 0) {
-    throw new FlareException('and cannot have zero arguments');
+    throw new FlareException('or cannot have zero arguments');
   } else if (arguments.length === 1) {
     return arguments[0];
   } else if (arguments[0] instanceof Cond) {
