@@ -7,26 +7,6 @@ try {
 
 var FlareException = function () { };
 
-function makeCondTree (stream, path, cond) {
-  if (cond instanceof AnyCmp) {
-    let alts = [];
-    for (let i = 0; i < cond.vals.length; i++) {
-      alts.push(makeCondTree(stream, path, cond.vals[i]));
-    }
-    return new Or(alts);
-  } else if (cond instanceof AllCmp) {
-    let alts = [];
-    for (let i = 0; i < cond.vals.length; i++) {
-      alts.push(makeCondTree(stream, path, cond.vals[i]));
-    }
-    return new And(alts);
-  } else if (cond instanceof Cmp) {
-    return new Cond(path, cond.op, cond.val, stream);
-  } else {
-    return new Cond(path, '==', cond, stream);
-  }
-}
-
 function makeSpans (stream, conds, path) {
   if (typeof path === 'undefined') { path = []; }
   var ands = [];
@@ -34,14 +14,10 @@ function makeSpans (stream, conds, path) {
     var p = path.slice();
     p.push(key);
     var val = conds[key];
-    switch (typeof (val)) {
+    switch (typeof val) {
       case 'object':
         if (val instanceof Cmp) {
           ands.push(new Cond(p, val.op, val.val, stream));
-        } else if (val instanceof AnyCmp) {
-          ands.push(makeCondTree(stream, p, val));
-        } else if (val instanceof AllCmp) {
-          ands.push(makeCondTree(stream, p, val));
         } else {
           ands.push(makeSpans(stream, val, p));
         }
@@ -298,18 +274,6 @@ class Cmp {
   }
 }
 
-class AnyCmp {
-  constructor (vals) {
-    this.vals = vals;
-  }
-}
-
-class AllCmp {
-  constructor (vals) {
-    this.vals = vals;
-  }
-}
-
 var Flare = {};
 
 Flare.select = function (start, end) {
@@ -360,14 +324,8 @@ Flare.and = function () {
     throw new FlareException('and cannot have zero arguments');
   } else if (arguments.length === 1) {
     return arguments[0];
-  } else if (arguments[0] instanceof Cond) {
-    return new And(Array.from(arguments));
-  } else if (arguments[0] instanceof And) {
-    return new And(Array.from(arguments));
-  } else if (arguments[0] instanceof Or) {
-    return new And(Array.from(arguments));
   } else {
-    return new AllCmp(Array.from(arguments));
+    return new And(Array.from(arguments));
   }
 };
 
@@ -376,14 +334,8 @@ Flare.or = function () {
     throw new FlareException('or cannot have zero arguments');
   } else if (arguments.length === 1) {
     return arguments[0];
-  } else if (arguments[0] instanceof Cond) {
-    return new Or(Array.from(arguments));
-  } else if (arguments[0] instanceof And) {
-    return new Or(Array.from(arguments));
-  } else if (arguments[0] instanceof Or) {
-    return new Or(Array.from(arguments));
   } else {
-    return new AnyCmp(Array.from(arguments));
+    return new Or(Array.from(arguments));
   }
 };
 

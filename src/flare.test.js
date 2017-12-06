@@ -190,8 +190,7 @@ test('or', () => {
   });
 });
 
-// TODO: figure out what AnyCmp represents and why `or()` doesn't always return an Or.
-test.skip('relative span', () => {
+test('relative span', () => {
   const s = stream('s');
   const t = stream('t');
 
