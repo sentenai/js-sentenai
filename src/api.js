@@ -34,7 +34,7 @@ class QueryResult {
     const ps = [];
     for (var i = 0; i < this.spans.length; i++) {
       var c = this.spans[i].cursor;
-      var p = new Promise(function (resolve, reject) {
+      var p = new Promise((resolve, reject) => {
         var req = this.protocol.request({
           hostname: this.host,
           path: '/query/' + c,
@@ -72,42 +72,97 @@ class QueryResult {
   }
 }
 
+class Cursor {
+  // TODO: add `returning` a.k.a. projections
+  constructor (client, query, queryId) {
+    this._client = client;
+    this._query = query;
+    this._queryId = queryId;
+    this._spans = null;
+  }
+
+  async spans () {
+    if (!this._spans) {
+      let id = this._queryId;
+      let allSpans = [];
+
+      while (id) {
+        const body = await this._fetchSpan(this._queryId);
+
+        const spans = body.spans.map(s => Object.assign({}, s, {
+          start: s.start ? new Date(s.start) : null,
+          end: s.end ? new Date(s.end) : null
+        }));
+
+        id = body.cursor;
+        allSpans = allSpans.concat(spans);
+      }
+
+      this._spans = allSpans;
+    }
+
+    return this._spans.map(s => ({
+      start: s.start,
+      end: s.end
+    }));
+  }
+
+  _fetchSpan (id) {
+    return new Promise((resolve, reject) => {
+      const req = https.get({
+        hostname: this._client.host,
+        path: `/query/${id}/spans`,
+        headers: this._client.getHeaders()
+      }, response => {
+        const body = [];
+        response.on('data', chunk => {
+          body.push(chunk);
+        });
+
+        response.on('end', () => {
+          resolve(JSON.parse(Buffer.concat(body).toString()));
+        });
+      });
+
+      req.on('error', err => {
+        reject(err);
+      });
+      req.end();
+    });
+  }
+}
+
 class Client {
   constructor (config) {
     this.auth_key = config.auth_key;
     this.protocol = https;
-    this.host = 'api.senten.ai';
+    this.host = 'api.sentenai.com';
   }
 
-  query (q) {
-    return new Promise(function (resolve, reject) {
-      const body = [];
+  getHeaders () {
+    return {
+      'auth-key': this.auth_key,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  query (query) {
+    return new Promise((resolve, reject) => {
       const req = this.protocol.request({
         hostname: this.host,
         path: '/query',
         method: 'POST',
-        headers: {
-          'auth-key': this.auth_key,
-          'Content-Type': 'application/json'
-        }
-      }, function (response) {
-        response.on('data', function (chunk) { body.push(chunk); });
-        response.on('end', function () {
-          var rspans = JSON.parse(body.join());
-          var spans = [];
-          for (var i = 0; i < rspans.length; i++) {
-            spans.push({
-              'start': new Date(rspans[i].start),
-              'end': new Date(rspans[i].end),
-              'cursor': rspans[i].cursor
-            });
-          }
-          resolve(new QueryResult(spans));
-        });
+        headers: this.getHeaders()
+      }, response => {
+        const queryId = response.headers.location;
+        resolve(new Cursor(this, query, queryId));
       });
 
-      req.on('error', function (err) { reject(err); });
-      req.write(JSON.stringify(q.ast));
+      req.on('error', err => {
+        reject(err);
+      });
+
+      req.write(JSON.stringify(query.ast));
       req.end();
     });
   }
