@@ -166,6 +166,31 @@ class Client {
       req.end();
     });
   }
+
+  streams () {
+    return new Promise((resolve, reject) => {
+      const req = https.get({
+        hostname: this.host,
+        path: '/streams',
+        headers: this.getHeaders()
+      }, response => {
+        const body = [];
+        response.on('data', chunk => {
+          body.push(chunk);
+        });
+
+        response.on('end', () => {
+          // TODO: create Stream instances
+          resolve(JSON.parse(Buffer.concat(body).toString()));
+        });
+      });
+
+      req.on('error', err => {
+        reject(err);
+      });
+      req.end();
+    })
+  }
 }
 
 module.exports = Client;
