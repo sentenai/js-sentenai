@@ -359,6 +359,6 @@ Flare.tz = function (tz) {
   }
 };
 
-Flare.ast = function (obj) { return JSON.stringify(obj.ast); };
+Flare.ast = function (obj) { return JSON.stringify(obj.ast, null, 2); };
 
 module.exports = Flare;
