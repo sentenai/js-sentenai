@@ -2,15 +2,15 @@
 var { flare } = require('../');
 var { stream, select, ast, lt, gte, gt, ne, or, all, any } = flare;
 
-const astObj = a => JSON.parse(ast(a));
+const expectAST = a => expect(JSON.parse(ast(a)));
 
 test('select span', () => {
   const s = stream('S');
-  expect(astObj(
+  expectAST(
     select()(
       s({ x: true })
     )
-  )).toEqual({
+  ).toEqual({
     select: {
       type: 'span',
       op: '==',
@@ -24,13 +24,13 @@ test('select span', () => {
 test('any comparisons', () => {
   const moose = stream('moose');
 
-  expect(astObj(
+  expectAST(
     any(
       moose({ x: lt(0) }),
       moose({ x: gte(3.141592653589793) }),
       moose({ b: ne(false) })
     )
-  )).toEqual({
+  ).toEqual({
     type: 'any',
     conds: [
       {
@@ -60,7 +60,7 @@ test('any comparisons', () => {
 
 test('stream access', () => {
   const s = stream('S');
-  expect(astObj(
+  expectAST(
     select()(
       s({ even: true })
         .then(s({ event: true }))
@@ -70,7 +70,7 @@ test('stream access', () => {
         .then(s({ '.id': { '': true } }))
         .then(s({ true: { '真实': true } }))
     )
-  )).toEqual({
+  ).toEqual({
     select: {
       type: 'serial',
       conds: [
@@ -135,13 +135,13 @@ test('all and any in serial', () => {
   const qux = stream('qux');
   const quux = stream('quux');
 
-  expect(astObj(
+  expectAST(
     select()(
       any(foo({ x: true }), bar({ y: true }))
         .then(baz({ z: true }))
         .then(all(qux({ 'α': true }), quux({ 'β': true })))
     )
-  )).toEqual({
+  ).toEqual({
     select: {
       type: 'serial',
       conds: [
@@ -175,11 +175,11 @@ test('or', () => {
   const s = stream('s');
   const t = stream('t');
 
-  expect(astObj(
+  expectAST(
     select()(
       or(s({ x: true }), t({ x: true }))
     )
-  )).toEqual({
+  ).toEqual({
     select: {
       expr: '||',
       args: [
@@ -194,14 +194,14 @@ test('relative span', () => {
   const s = stream('s');
   const t = stream('t');
 
-  expect(astObj(
+  expectAST(
     select()(
       or(
         s({ x: true }).min({ years: 1, months: 1 }),
         t({ x: true }).after({ minutes: 11 }).within({ seconds: 13 })
       ).max({ weeks: 1 })
     )
-  )).toEqual({
+  ).toEqual({
     select: {
       expr: '||',
       args: [
@@ -231,7 +231,7 @@ test('relative span', () => {
 test('nested relative spans', () => {
   const s = stream('S');
 
-  expect(astObj(
+  expectAST(
     select()(
       s({ x: lt(0) }).then(
         s({ x: 0 }).then(
@@ -239,7 +239,7 @@ test('nested relative spans', () => {
         ).within({ seconds: 2 })
       )
     )
-  )).toEqual({
+  ).toEqual({
     select: {
       type: 'serial',
       conds: [
