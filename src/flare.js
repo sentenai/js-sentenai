@@ -302,7 +302,8 @@ Flare.stream = function (args) {
   }
   return function () {
     if (arguments.length < 1) {
-      throw new FlareException("can't bind stream to nothing");
+      // TODO: this might be mixing responsibilities too much
+      return name;
     } else if (arguments.length === 1) {
       /* SPAN */
       return makeSpans(new Stream(name), arguments[0], ['event']);

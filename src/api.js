@@ -205,6 +205,42 @@ class Client {
   streams () {
     return this.fetch(`${this.host}/streams`).then(res => res.json());
   }
+
+  fields (stream) {
+    return this.fetch(
+      `${this.host}/streams/${stream()}/fields`
+    ).then(res => res.json());
+  }
+
+  values (stream) {
+    return this.fetch(
+      `${this.host}/streams/${stream()}/values`
+    ).then(res => res.json());
+  }
+
+  newest (stream) {
+    return this.fetch(
+      `${this.host}/streams/${stream()}/newest`
+    ).then(async (res) => {
+      return {
+        event: await res.json(),
+        ts: new Date(res.headers.get('Timestamp')),
+        id: res.headers.get('Location')
+      };
+    });
+  }
+
+  oldest (stream) {
+    return this.fetch(
+      `${this.host}/streams/${stream()}/oldest`
+    ).then(async (res) => {
+      return {
+        event: await res.json(),
+        ts: new Date(res.headers.get('Timestamp')),
+        id: res.headers.get('Location')
+      };
+    });
+  }
 }
 
 module.exports = Client;
