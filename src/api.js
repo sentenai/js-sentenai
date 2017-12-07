@@ -1,5 +1,7 @@
 require('es6-shim');
-const https = require('https');
+const fetch = require('node-fetch');
+
+const { ast } = require('./flare');
 
 // https://stackoverflow.com/a/27093173
 const minDate = new Date(1, 0, 1, 0, 0, 0);
@@ -120,27 +122,9 @@ class Cursor {
   }
 
   _fetchSpan (id) {
-    return new Promise((resolve, reject) => {
-      const req = https.get({
-        hostname: this._client.host,
-        path: `/query/${id}/spans`,
-        headers: this._client.getHeaders()
-      }, response => {
-        const body = [];
-        response.on('data', chunk => {
-          body.push(chunk);
-        });
-
-        response.on('end', () => {
-          resolve(JSON.parse(Buffer.concat(body).toString()));
-        });
-      });
-
-      req.on('error', err => {
-        reject(err);
-      });
-      req.end();
-    });
+    return this._client.fetch(`${this._client.host}/query/${id}/spans`, {
+      headers: this._client.getHeaders()
+    }).then(res => res.json());
   }
 
   async _slice (cursorId, start, end, maxRetries = 3) {
@@ -172,40 +156,21 @@ class Cursor {
   }
 
   async _fetchEvents (cursor, maxRetries, retries = 0) {
-    return new Promise((resolve, reject) => {
-      const req = https.get({
-        hostname: this._client.host,
-        path: `/query/${cursor}/events`,
-        headers: this._client.getHeaders()
-      }, response => {
-        const body = [];
-        const { statusCode, headers } = response;
-        const ok = statusCode >= 200 && statusCode;
+    return this._client.fetch(`${this._client.host}/query/${cursor}/events`, {
+      headers: this._client.getHeaders()
+    }).then(async (res) => {
+      if (res.ok) {
+        const results = await res.json();
 
-        response.on('data', chunk => {
-          body.push(chunk);
-        });
-
-        response.on('end', () => {
-          const results = JSON.parse(Buffer.concat(body).toString());
-          if (ok) {
-            resolve({
-              results,
-              cursor: headers.cursor || null
-            });
-          } else if (retries < maxRetries) {
-            // TODO: confirm that `resolve` is the right move here, confirm that retries work
-            resolve(this._fetchEvents(cursor, maxRetries, retries + 1));
-          } else {
-            reject(new SentenaiException('Failed to get cursor'));
-          }
-        });
-      });
-
-      req.on('error', err => {
-        reject(err);
-      });
-      req.end();
+        return {
+          results,
+          cursor: res.headers.get('cursor') || null
+        };
+      } else if (retries < maxRetries) {
+        return this._fetchEvents(cursor, maxRetries, retries + 1);
+      } else {
+        throw new SentenaiException('Failed to get cursor');
+      }
     });
   }
 }
@@ -213,8 +178,8 @@ class Cursor {
 class Client {
   constructor (config) {
     this.auth_key = config.auth_key;
-    this.protocol = https;
-    this.host = 'api.sentenai.com';
+    this.host = 'https://api.sentenai.com';
+    this.fetch = fetch;
   }
 
   getHeaders () {
@@ -225,49 +190,19 @@ class Client {
   }
 
   query (query) {
-    return new Promise((resolve, reject) => {
-      const req = this.protocol.request({
-        hostname: this.host,
-        path: '/query',
-        method: 'POST',
-        headers: this.getHeaders()
-      }, response => {
-        const queryId = response.headers.location;
-        resolve(new Cursor(this, query, queryId));
-      });
-
-      req.on('error', err => {
-        reject(err);
-      });
-
-      req.write(JSON.stringify(query.ast));
-      req.end();
-    });
+    return this.fetch(`${this.host}/query`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: ast(query)
+    }).then(res =>
+      new Cursor(this, query, res.headers.get('location'))
+    );
   }
 
   streams () {
-    return new Promise((resolve, reject) => {
-      const req = https.get({
-        hostname: this.host,
-        path: '/streams',
-        headers: this.getHeaders()
-      }, response => {
-        const body = [];
-        response.on('data', chunk => {
-          body.push(chunk);
-        });
-
-        response.on('end', () => {
-          // TODO: create Stream instances
-          resolve(JSON.parse(Buffer.concat(body).toString()));
-        });
-      });
-
-      req.on('error', err => {
-        reject(err);
-      });
-      req.end();
-    });
+    return this.fetch(`${this.host}/streams`, {
+      headers: this.getHeaders()
+    }).then(res => res.json());
   }
 }
 

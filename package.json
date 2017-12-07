@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/sentenai/js-sentenai#readme",
   "dependencies": {
-    "es6-shim": "^0.35.3"
+    "es6-shim": "^0.35.3",
+    "node-fetch": "^1.7.3"
   },
   "devDependencies": {
     "jest": "^21.2.1",
