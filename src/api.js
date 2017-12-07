@@ -122,9 +122,9 @@ class Cursor {
   }
 
   _fetchSpan (id) {
-    return this._client.fetch(`${this._client.host}/query/${id}/spans`, {
-      headers: this._client.getHeaders()
-    }).then(res => res.json());
+    return this._client.fetch(
+      `${this._client.host}/query/${id}/spans`
+    ).then(res => res.json());
   }
 
   async _slice (cursorId, start, end, maxRetries = 3) {
@@ -156,9 +156,9 @@ class Cursor {
   }
 
   async _fetchEvents (cursor, maxRetries, retries = 0) {
-    return this._client.fetch(`${this._client.host}/query/${cursor}/events`, {
-      headers: this._client.getHeaders()
-    }).then(async (res) => {
+    return this._client.fetch(
+      `${this._client.host}/query/${cursor}/events`
+    ).then(async (res) => {
       if (res.ok) {
         const results = await res.json();
 
@@ -179,7 +179,11 @@ class Client {
   constructor (config) {
     this.auth_key = config.auth_key;
     this.host = 'https://api.sentenai.com';
-    this.fetch = fetch;
+    this.fetch = (url, options) => {
+      return fetch(url, Object.assign({}, options, {
+        headers: this.getHeaders()
+      }));
+    };
   }
 
   getHeaders () {
@@ -192,7 +196,6 @@ class Client {
   query (query) {
     return this.fetch(`${this.host}/query`, {
       method: 'POST',
-      headers: this.getHeaders(),
       body: ast(query)
     }).then(res =>
       new Cursor(this, query, res.headers.get('location'))
@@ -200,9 +203,7 @@ class Client {
   }
 
   streams () {
-    return this.fetch(`${this.host}/streams`, {
-      headers: this.getHeaders()
-    }).then(res => res.json());
+    return this.fetch(`${this.host}/streams`).then(res => res.json());
   }
 }
 
