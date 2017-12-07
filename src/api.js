@@ -1,7 +1,11 @@
 require('es6-shim');
 const https = require('https');
 
-// var SentenaiException = function () { };
+// https://stackoverflow.com/a/27093173
+const minDate = new Date(1, 0, 1, 0, 0, 0);
+const maxDate = new Date(9990, 11, 31, 23, 59, 59);
+
+const SentenaiException = function () {};
 
 class QueryResult {
   constructor (client, spans) {
@@ -81,13 +85,21 @@ class Cursor {
     this._spans = null;
   }
 
+  async json () {
+    await this.spans();
+    const data = await Promise.all(this._spans.map(async (span) =>
+      this._slice(span.cursor, span.start || minDate, span.end || maxDate)
+    ));
+    return JSON.stringify(data, null, 2);
+  }
+
   async spans () {
     if (!this._spans) {
       let id = this._queryId;
       let allSpans = [];
 
       while (id) {
-        const body = await this._fetchSpan(this._queryId);
+        const body = await this._fetchSpan(id);
 
         const spans = body.spans.map(s => Object.assign({}, s, {
           start: s.start ? new Date(s.start) : null,
@@ -121,6 +133,72 @@ class Cursor {
 
         response.on('end', () => {
           resolve(JSON.parse(Buffer.concat(body).toString()));
+        });
+      });
+
+      req.on('error', err => {
+        reject(err);
+      });
+      req.end();
+    });
+  }
+
+  async _slice (cursorId, start, end, maxRetries = 3) {
+    let cursor = `${cursorId.split('+')[0]}+${start.toISOString()}+${end.toISOString()}`;
+    const streams = {};
+
+    while (cursor) {
+      const response = await this._fetchEvents(cursor, maxRetries);
+      cursor = response.cursor;
+      const data = response.results;
+
+      Object.keys(data.streams).forEach(queryHash => {
+        if (!streams[queryHash]) {
+          streams[queryHash] = {
+            streams: data.streams[queryHash],
+            events: []
+          };
+        }
+      });
+
+      data.events.forEach(event => {
+        const { events } = streams[event.stream];
+        delete event.stream;
+        events.push(event);
+      });
+    }
+
+    return { start, end, streams: Object.values(streams) };
+  }
+
+  async _fetchEvents (cursor, maxRetries, retries = 0) {
+    return new Promise((resolve, reject) => {
+      const req = https.get({
+        hostname: this._client.host,
+        path: `/query/${cursor}/events`,
+        headers: this._client.getHeaders()
+      }, response => {
+        const body = [];
+        const { statusCode, headers } = response;
+        const ok = statusCode >= 200 && statusCode;
+
+        response.on('data', chunk => {
+          body.push(chunk);
+        });
+
+        response.on('end', () => {
+          const results = JSON.parse(Buffer.concat(body).toString());
+          if (ok) {
+            resolve({
+              results,
+              cursor: headers.cursor || null
+            });
+          } else if (retries < maxRetries) {
+            // TODO: confirm that `resolve` is the right move here, confirm that retries work
+            resolve(this._fetchEvents(cursor, maxRetries, retries + 1));
+          } else {
+            reject(new SentenaiException('Failed to get cursor'));
+          }
         });
       });
 
@@ -189,7 +267,7 @@ class Client {
         reject(err);
       });
       req.end();
-    })
+    });
   }
 }
 
