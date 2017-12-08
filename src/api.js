@@ -179,11 +179,12 @@ class Client {
   constructor (config) {
     this.auth_key = config.auth_key;
     this.host = 'https://api.sentenai.com';
-    this.fetch = (url, options) => {
-      return fetch(url, Object.assign({}, options, {
-        headers: this.getHeaders()
-      }));
-    };
+  }
+
+  fetch (url, options) {
+    return fetch(url, Object.assign({}, options, {
+      headers: this.getHeaders()
+    }));
   }
 
   getHeaders () {
