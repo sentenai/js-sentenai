@@ -8,75 +8,7 @@ const minDate = new Date(1, 0, 1, 0, 0, 0);
 const maxDate = new Date(9990, 11, 31, 23, 59, 59);
 
 const SentenaiException = function () {};
-
-class QueryResult {
-  constructor (client, spans) {
-    this.client = client;
-    this.spans = spans;
-  }
-
-  get stats () {
-    var max;
-    var min;
-    var tot = 0;
-    var dts = [];
-    for (var i = 0; i < this.spans.length; i++) {
-      var dt = this.spans[i].end - this.spans[i].start;
-      dts.push(dt);
-      tot = tot + dt;
-      min = dt >= min ? min : dt;
-      max = dt <= max ? max : dt;
-    }
-    return {
-      count: this.spans.length,
-      mean: tot / dts.length,
-      min: min,
-      max: max,
-      median: dts.sort()[Math.floor(dts.length / 2)]
-    };
-  }
-
-  spans (resolve, reject) {
-    const ps = [];
-    for (var i = 0; i < this.spans.length; i++) {
-      var c = this.spans[i].cursor;
-      var p = new Promise((resolve, reject) => {
-        var req = this.protocol.request({
-          hostname: this.host,
-          path: '/query/' + c,
-          method: 'GET',
-          headers: {
-            'auth-key': this.client.auth_key,
-            'Content-Type': 'application/json'
-          }
-        }, function (response) {
-          response.on('data', function (chunk) { body.push(chunk); });
-          response.on('end', function () {
-            const events = JSON.parse(body.join());
-            return {s: this.spans[i].start, e: this.spans[i].end, evts: events};
-          });
-        });
-      });
-      ps.push(p);
-    }
-    return new Promise(function (resolve) {
-      var segments = sp.evts;
-      const slices = [];
-      for (var i = 0; i < segments.length; i++) {
-        var slice = {};
-        for (var k in segments[i]) {
-          slice[k] = {stream: segments[i][k].stream, events: []};
-        }
-        for (var j = 0; j < segments[i].events; j++) {
-          var evt = segments[i].events[j];
-          slice[evt.stream].events.push(evt.event);
-        }
-        slices.push({streams: slice, start: sp.s, end: sp.e});
-      }
-      resolve(slices);
-    });
-  }
-}
+const sum = list => list.reduce((total, num) => total + num, 0);
 
 class Cursor {
   // TODO: add `returning` a.k.a. projections
@@ -119,6 +51,27 @@ class Cursor {
       start: s.start,
       end: s.end
     }));
+  }
+
+  // Get time-based stats about query results in milliseconds
+  async stats () {
+    await this.spans();
+
+    // TODO: why would a span _not_ have a start / end?
+    const deltas = this._spans.filter(
+      s => s.start && s.end
+    ).map(s => s.end - s.start);
+
+    // Don't divide by zero
+    if (!deltas.length) return {};
+
+    return {
+      count: this._spans.length,
+      mean: sum(deltas) / deltas.length,
+      min: Math.min.apply(Math, deltas),
+      max: Math.max.apply(Math, deltas),
+      median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
+    };
   }
 
   _fetchSpan (id) {
