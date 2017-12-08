@@ -4,8 +4,8 @@
   "description": "JavaScript client for Sentenai",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "lint": "semistandard"
+    "test": "npm run lint && jest",
+    "lint": "semistandard src"
   },
   "repository": {
     "type": "git",
