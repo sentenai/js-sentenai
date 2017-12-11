@@ -361,5 +361,6 @@ Flare.tz = function (tz) {
 };
 
 Flare.ast = function (obj) { return JSON.stringify(obj.ast, null, 2); };
+Flare.FlareException = FlareException;
 
 module.exports = Flare;

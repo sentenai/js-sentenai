@@ -1,13 +1,17 @@
 require('es6-shim');
 const fetch = require('node-fetch');
 
-const { ast, stream } = require('./flare');
+const { ast, stream, FlareException } = require('./flare');
 
 // https://stackoverflow.com/a/27093173
 const minDate = new Date(1, 0, 1, 0, 0, 0);
 const maxDate = new Date(9990, 11, 31, 23, 59, 59);
 
+// TODO: improve custom exceptions
 const SentenaiException = function () {};
+const AuthenticationError = function () {};
+const APIError = function () {};
+const NotFound = function () {};
 const sum = list => list.reduce((total, num) => total + num, 0);
 
 class Cursor {
@@ -215,7 +219,7 @@ class Client {
     const url = eid ? `${base}/events/${eid}` : base;
 
     return this.fetch(url).then(async (res) => {
-      // TODO: handle status codes, communicate errors
+      handleStatusCode(res);
       if (eid) {
         return {
           id: res.headers.get('location'),
@@ -241,6 +245,7 @@ class Client {
 
     const url = Object.keys(params).length ? `${base}?${queryString(params)}` : base;
     return this.fetch(url).then(res => {
+      handleStatusCode(res);
       return res.json();
     });
   }
@@ -249,6 +254,8 @@ class Client {
     const url = `/streams/${stream()}/events/${eid}`;
     return this.fetch(url, {
       method: 'delete'
+    }).then(res => {
+      handleStatusCode(res);
     });
   }
 
@@ -259,6 +266,8 @@ class Client {
       headers: {
         'auth-key': this.auth_key
       }
+    }).then(res => {
+      handleStatusCode(res);
     });
   }
 
@@ -266,6 +275,7 @@ class Client {
     const esc = encodeURIComponent;
     const url = `/streams/${stream()}/start/${esc(start.toISOString())}/end/${esc(end.toISOString())}`;
     return this.fetch(url).then(async (res) => {
+      handleStatusCode(res);
       const text = await res.text();
       return text.split('\n').map(line => JSON.parse(line));
     });
@@ -276,6 +286,22 @@ function queryString (params) {
   return Object.keys(params)
     .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
     .join('&');
+}
+
+function handleStatusCode (res) {
+  const code = res.status;
+
+  if (code === 401) {
+    throw new AuthenticationError('Invalid API key');
+  } else if (code >= 500) {
+    throw new SentenaiException('Something went wrong');
+  } else if (code === 400) {
+    throw new FlareException();
+  } else if (code === 404) {
+    throw new NotFound();
+  } else if (code >= 400) {
+    throw new APIError(res);
+  }
 }
 
 module.exports = Client;
