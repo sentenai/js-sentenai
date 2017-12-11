@@ -134,9 +134,9 @@ class Client {
     this.host = 'https://api.sentenai.com';
   }
 
-  fetch (url, options) {
+  fetch (url, options = {}) {
     return fetch(`${this.host}${url}`, Object.assign({}, options, {
-      headers: this.getHeaders()
+      headers: options.headers || this.getHeaders()
     }));
   }
 
@@ -230,10 +230,24 @@ class Client {
 
   // TODO:
   // put (stream, event, { eid, timestamp }) {}
-  // delete (stream, eid) {}
-  // destroy (stream) {}
-  // range (stream, start, end) {}
   // stats (stream, field, { start, end }) {}
+
+  delete (stream, eid) {
+    const url = `/streams/${stream()}/events/${eid}`;
+    return this.fetch(url, {
+      method: 'delete'
+    });
+  }
+
+  destroy (stream) {
+    const url = `/streams/${stream()}`;
+    return this.fetch(url, {
+      method: 'delete',
+      headers: {
+        'auth-key': this.auth_key
+      }
+    });
+  }
 }
 
 module.exports = Client;
