@@ -156,20 +156,22 @@ class Client {
     );
   }
 
-  async streams (name='', meta={}) {
+  async streams (name = '', meta = {}) {
     const streamList = await this.fetch('/streams').then(res => res.json());
-    name = name.toLowerCase()
+    name = name.toLowerCase();
 
     return streamList.filter(s => {
-      let match = true
+      let match = true;
       if (name) {
-        match = s.name.toLowerCase().includes(name)
+        match = s.name.toLowerCase().includes(name);
       }
       Object.keys(meta).forEach(key => {
-        match = match && s.meta[key] == meta[key]
-      })
-      return match
-    }).map(s => stream(s))
+        match = match && s.meta[key] === meta[key];
+      });
+      return match;
+    // TODO: this is weird because `stream` just returns another function.
+    // doesn't print well, doesn't inform user of what's going on
+    }).map(s => stream(s));
   }
 
   fields (stream) {
