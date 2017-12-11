@@ -1,7 +1,7 @@
 require('es6-shim');
 const fetch = require('node-fetch');
 
-const { ast } = require('./flare');
+const { ast, stream } = require('./flare');
 
 // https://stackoverflow.com/a/27093173
 const minDate = new Date(1, 0, 1, 0, 0, 0);
@@ -156,8 +156,20 @@ class Client {
     );
   }
 
-  streams () {
-    return this.fetch(`${this.host}/streams`).then(res => res.json());
+  async streams (name='', meta={}) {
+    const streamList = await this.fetch(`${this.host}/streams`).then(res => res.json());
+    name = name.toLowerCase()
+
+    return streamList.filter(s => {
+      let match = true
+      if (name) {
+        match = s.name.toLowerCase().includes(name)
+      }
+      Object.keys(meta).forEach(key => {
+        match = match && s.meta[key] == meta[key]
+      })
+      return match
+    }).map(s => stream(s))
   }
 
   fields (stream) {
