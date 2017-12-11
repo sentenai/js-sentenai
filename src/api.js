@@ -230,7 +230,20 @@ class Client {
 
   // TODO:
   // put (stream, event, { eid, timestamp }) {}
-  // stats (stream, field, { start, end }) {}
+
+  stats (stream, field, opts = {}) {
+    const { start, end } = opts;
+    const base = `/streams/${stream()}/fields/${field}/stats`;
+
+    const params = {};
+    if (start) { params.start = start.toISOString(); }
+    if (end) { params.end = end.toISOString(); }
+
+    const url = Object.keys(params).length ? `${base}?${queryString(params)}` : base;
+    return this.fetch(url).then(res => {
+      return res.json();
+    });
+  }
 
   delete (stream, eid) {
     const url = `/streams/${stream()}/events/${eid}`;
@@ -257,6 +270,12 @@ class Client {
       return text.split('\n').map(line => JSON.parse(line));
     });
   }
+}
+
+function queryString (params) {
+  return Object.keys(params)
+    .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+    .join('&');
 }
 
 module.exports = Client;
