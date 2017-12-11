@@ -248,6 +248,15 @@ class Client {
       }
     });
   }
+
+  range (stream, start, end) {
+    const esc = encodeURIComponent;
+    const url = `/streams/${stream()}/start/${esc(start.toISOString())}/end/${esc(end.toISOString())}`;
+    return this.fetch(url).then(async (res) => {
+      const text = await res.text();
+      return text.split('\n').map(line => JSON.parse(line));
+    });
+  }
 }
 
 module.exports = Client;
