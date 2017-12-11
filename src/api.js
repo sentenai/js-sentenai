@@ -232,8 +232,37 @@ class Client {
     });
   }
 
-  // TODO:
-  // put (stream, event, { eid, timestamp }) {}
+  put (stream, event, opts = {}) {
+    const { id, timestamp } = opts;
+
+    const headers = this.getHeaders();
+    const base = `/streams/${stream()}/events`;
+    const url = id ? `${base}/${id}` : base;
+
+    if (timestamp) {
+      headers.timestamp = timestamp.toISOString();
+    }
+
+    if (id) {
+      return this.fetch(url, {
+        headers,
+        method: 'put',
+        body: JSON.stringify(event)
+      }).then(res => {
+        handleStatusCode(res);
+        return id;
+      });
+    } else {
+      return this.fetch(url, {
+        headers,
+        method: 'post',
+        body: JSON.stringify(event)
+      }).then(res => {
+        handleStatusCode(res);
+        return res.headers.get('location');
+      });
+    }
+  }
 
   stats (stream, field, opts = {}) {
     const { start, end } = opts;
