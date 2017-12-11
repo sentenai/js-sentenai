@@ -209,6 +209,31 @@ class Client {
       };
     });
   }
+
+  get (stream, eid) {
+    const base = `/streams/${stream()}`;
+    const url = eid ? `${base}/events/${eid}` : base;
+
+    return this.fetch(url).then(async (res) => {
+      // TODO: handle status codes, communicate errors
+      if (eid) {
+        return {
+          id: res.headers.get('location'),
+          ts: res.headers.get('timestamp'),
+          event: await res.json()
+        };
+      } else {
+        return res.json();
+      }
+    });
+  }
+
+  // TODO:
+  // put (stream, event, { eid, timestamp }) {}
+  // delete (stream, eid) {}
+  // destroy (stream) {}
+  // range (stream, start, end) {}
+  // stats (stream, field, { start, end }) {}
 }
 
 module.exports = Client;
