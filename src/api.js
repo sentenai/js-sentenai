@@ -76,7 +76,7 @@ class Cursor {
 
   _fetchSpan (id) {
     return this._client.fetch(
-      `${this._client.host}/query/${id}/spans`
+      `/query/${id}/spans`
     ).then(res => res.json());
   }
 
@@ -110,7 +110,7 @@ class Cursor {
 
   async _fetchEvents (cursor, maxRetries, retries = 0) {
     return this._client.fetch(
-      `${this._client.host}/query/${cursor}/events`
+      `/query/${cursor}/events`
     ).then(async (res) => {
       if (res.ok) {
         const results = await res.json();
@@ -135,7 +135,7 @@ class Client {
   }
 
   fetch (url, options) {
-    return fetch(url, Object.assign({}, options, {
+    return fetch(`${this.host}${url}`, Object.assign({}, options, {
       headers: this.getHeaders()
     }));
   }
@@ -148,7 +148,7 @@ class Client {
   }
 
   query (query) {
-    return this.fetch(`${this.host}/query`, {
+    return this.fetch('/query', {
       method: 'POST',
       body: ast(query)
     }).then(res =>
@@ -157,7 +157,7 @@ class Client {
   }
 
   async streams (name='', meta={}) {
-    const streamList = await this.fetch(`${this.host}/streams`).then(res => res.json());
+    const streamList = await this.fetch('/streams').then(res => res.json());
     name = name.toLowerCase()
 
     return streamList.filter(s => {
@@ -174,19 +174,19 @@ class Client {
 
   fields (stream) {
     return this.fetch(
-      `${this.host}/streams/${stream()}/fields`
+      `/streams/${stream()}/fields`
     ).then(res => res.json());
   }
 
   values (stream) {
     return this.fetch(
-      `${this.host}/streams/${stream()}/values`
+      `/streams/${stream()}/values`
     ).then(res => res.json());
   }
 
   newest (stream) {
     return this.fetch(
-      `${this.host}/streams/${stream()}/newest`
+      `/streams/${stream()}/newest`
     ).then(async (res) => {
       return {
         event: await res.json(),
@@ -198,7 +198,7 @@ class Client {
 
   oldest (stream) {
     return this.fetch(
-      `${this.host}/streams/${stream()}/oldest`
+      `/streams/${stream()}/oldest`
     ).then(async (res) => {
       return {
         event: await res.json(),
