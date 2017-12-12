@@ -2,6 +2,8 @@
 
 > Standalone JavaScript client for Sentenai
 
+[![Build Status](https://travis-ci.org/sentenai/js-sentenai.svg?branch=master)](https://travis-ci.org/sentenai/js-sentenai) [![npm version](https://badge.fury.io/js/sentenai.svg)](https://badge.fury.io/js/sentenai)
+
 ```shell
 $ npm install --save sentenai
 ```
