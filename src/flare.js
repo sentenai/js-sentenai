@@ -283,19 +283,26 @@ class Switch {
     }
   }
 
-  setStream (stream) {
-    this.stream = stream;
-  }
-
   then (cond) {
     return new Switch(this.conds.concat(cond));
+  }
+
+  get ast () {
+    throw new FlareException('Must bind a switch to a stream before producing an AST');
+  }
+}
+
+class BoundSwitch {
+  constructor (stream, sw) {
+    this.stream = stream;
+    this.switch = sw;
   }
 
   get ast () {
     return {
       type: 'switch',
       stream: { name: this.stream.name },
-      conds: this.conds.map(cond => makeSpans(this.stream, cond, ['event']).ast).map(span => {
+      conds: this.switch.conds.map(cond => makeSpans(this.stream, cond, ['event']).ast).map(span => {
         delete span.stream;
         return span;
       })
@@ -335,8 +342,7 @@ Flare.stream = function (args) {
       return name;
     } else if (arguments.length === 1) {
       if (arguments[0] instanceof Switch) {
-        arguments[0].setStream(new Stream(name));
-        return arguments[0];
+        return new BoundSwitch(new Stream(name), arguments[0]);
       } else {
         return makeSpans(new Stream(name), arguments[0], ['event']);
       }
