@@ -1,6 +1,6 @@
 /* global test, expect */
 var { flare } = require('../');
-var { stream, select, ast, lt, gte, gt, ne, or, all, any } = flare;
+var { stream, select, ast, lt, gte, gt, ne, or, all, any, event } = flare;
 
 const expectAST = a => expect(JSON.parse(ast(a)));
 
@@ -270,6 +270,35 @@ test('nested relative spans', () => {
             }
           ],
           within: {seconds: 2}
+        }
+      ]
+    }
+  });
+});
+
+test('switches', () => {
+  const s = stream('S');
+
+  expectAST(
+    select()(
+      s(event({ x: lt(0.1) }).then({ x: gt(0) }))
+    )
+  ).toEqual({
+    select: {
+      type: 'switch',
+      stream: { name: 'S' },
+      conds: [
+        {
+          op: '<',
+          arg: { type: 'double', val: 0.1 },
+          type: 'span',
+          path: [ 'event', 'x' ]
+        },
+        {
+          op: '>',
+          arg: { type: 'int', val: 0 },
+          type: 'span',
+          path: [ 'event', 'x' ]
         }
       ]
     }

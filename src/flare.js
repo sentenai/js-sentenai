@@ -274,6 +274,35 @@ class Cmp {
   }
 }
 
+class Switch {
+  constructor (conds) {
+    if (Array.isArray(conds)) {
+      this.conds = conds;
+    } else {
+      this.conds = [conds];
+    }
+  }
+
+  setStream (stream) {
+    this.stream = stream;
+  }
+
+  then (cond) {
+    return new Switch(this.conds.concat(cond));
+  }
+
+  get ast () {
+    return {
+      type: 'switch',
+      stream: { name: this.stream.name },
+      conds: this.conds.map(cond => makeSpans(this.stream, cond, ['event']).ast).map(span => {
+        delete span.stream;
+        return span;
+      })
+    };
+  }
+}
+
 var Flare = {};
 
 Flare.select = function (start, end) {
@@ -305,14 +334,20 @@ Flare.stream = function (args) {
       // TODO: this might be mixing responsibilities too much
       return name;
     } else if (arguments.length === 1) {
-      /* SPAN */
-      return makeSpans(new Stream(name), arguments[0], ['event']);
+      if (arguments[0] instanceof Switch) {
+        arguments[0].setStream(new Stream(name));
+        return arguments[0];
+      } else {
+        return makeSpans(new Stream(name), arguments[0], ['event']);
+      }
     } else {
-      throw FlareException('switches not supported yet');
-      /* SWITCH */
+      throw FlareException('Too many arguments provided to stream');
     }
-    // new Stream(name);
   };
+};
+
+Flare.event = function (cond) {
+  return new Switch(cond);
 };
 
 /* parallel pattern match */
