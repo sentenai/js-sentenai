@@ -12,12 +12,13 @@ $ npm install --save sentenai
 
 ```js
 const { Client, flare } = require('sentenai');
+const { stream, select, gt } = flare;
 const sentenai = new Client({ auth_key: '' });
 
-const myStream = flare.stream('my-stream-id');
+const myStream = stream('my-stream-id');
 const json = await sentenai.query(
-  flare.select()(
-    myStream({ temp: flare.gt(82.3) })
+  select()(
+    myStream({ temp: gt(82.3) })
   )
 ).then(data => data.json());
 ```
