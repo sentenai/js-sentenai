@@ -16,11 +16,12 @@ const sum = list => list.reduce((total, num) => total + num, 0);
 
 class Cursor {
   // TODO: add `returning` a.k.a. projections
-  constructor (client, query, queryId) {
+  constructor (client, query, queryId, limit) {
     this._client = client;
     this._query = query;
     this._queryId = queryId;
     this._spans = null;
+    this._limit = limit;
   }
 
   async json () {
@@ -37,7 +38,7 @@ class Cursor {
       let allSpans = [];
 
       while (id) {
-        const body = await this._fetchSpan(id);
+        const body = await this._fetchSpan(id, this._limit);
 
         const spans = body.spans.map(s => Object.assign({}, s, {
           start: s.start ? new Date(s.start) : null,
@@ -46,6 +47,10 @@ class Cursor {
 
         id = body.cursor;
         allSpans = allSpans.concat(spans);
+
+        if (typeof this._limit === 'number' && allSpans.length >= this._limit) {
+          break;
+        }
       }
 
       this._spans = allSpans;
@@ -78,10 +83,10 @@ class Cursor {
     };
   }
 
-  _fetchSpan (id) {
-    return this._client.fetch(
-      `/query/${id}/spans`
-    ).then(res => res.json());
+  _fetchSpan (id, limit) {
+    const base = `/query/${id}/spans`;
+    const url = typeof limit === 'number' ? `${base}?${queryString({ limit })}` : base;
+    return this._client.fetch(url).then(res => res.json());
   }
 
   async _slice (cursorId, start, end, maxRetries = 3) {
@@ -151,12 +156,12 @@ class Client {
     };
   }
 
-  query (query) {
+  query (query, limit) {
     return this.fetch('/query', {
       method: 'POST',
       body: ast(query)
     }).then(res =>
-      new Cursor(this, query, res.headers.get('location'))
+      new Cursor(this, query, res.headers.get('location'), limit)
     );
   }
 
