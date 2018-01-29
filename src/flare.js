@@ -77,12 +77,27 @@ class Delta {
 }
 
 class Stream {
-  constructor (name) {
+  constructor (name, _filter) {
     this.name = name;
+    this._filter = _filter && _filter.constructor === Object ? new Filter(_filter) : _filter;
   }
 
   get ast () {
-    return {'name': this.name};
+    const ast = { 'name': this.name };
+    if (this._filter) {
+      ast.filter = this._filter.ast;
+    }
+    return ast;
+  }
+}
+
+class Filter {
+  constructor (map) {
+    this._map = map;
+  }
+
+  get ast () {
+    return makeSpans(undefined, this._map, ['event']).ast;
   }
 }
 
@@ -324,17 +339,11 @@ Flare.select = function (start, end) {
   };
 };
 
-Flare.stream = function (args) {
-  var name;
-  switch (typeof (args)) {
-    case 'object':
-      name = args.name;
-      break;
-    case 'string':
-      name = args;
-      break;
-    default:
-      throw new FlareException('bad stream arguments');
+Flare.stream = function (name, filters) {
+  if (typeof name === 'object') {
+    name = name.name;
+  } else if (typeof name !== 'string') {
+    throw new FlareException('bad stream arguments');
   }
   return function () {
     if (arguments.length < 1) {
@@ -342,14 +351,18 @@ Flare.stream = function (args) {
       return name;
     } else if (arguments.length === 1) {
       if (arguments[0] instanceof Switch) {
-        return new BoundSwitch(new Stream(name), arguments[0]);
+        return new BoundSwitch(new Stream(name, filters), arguments[0]);
       } else {
-        return makeSpans(new Stream(name), arguments[0], ['event']);
+        return makeSpans(new Stream(name, filters), arguments[0], ['event']);
       }
     } else {
       throw FlareException('Too many arguments provided to stream');
     }
   };
+};
+
+Flare.filter = function (map) {
+  return new Filter(map);
 };
 
 Flare.event = function (cond) {

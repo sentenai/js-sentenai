@@ -1,6 +1,6 @@
 /* global test, expect */
 var { flare } = require('../');
-var { stream, select, ast, lt, gte, gt, ne, or, all, any, event } = flare;
+var { stream, select, ast, lt, gte, gt, ne, and, or, all, any, event, filter } = flare;
 
 const expectAST = a => expect(JSON.parse(ast(a)));
 
@@ -305,4 +305,59 @@ test('switches', () => {
   });
 });
 
-// TODO: test('stream filters', () => {})
+test('stream filters', () => {
+  const s = stream('S', { season: 'summer' });
+
+  expectAST(
+    select()(
+      and(s({ temperature: gte(77.5) }), s({ sunny: true }))
+    )
+  ).toEqual({
+    select: {
+      expr: '&&',
+      args: [
+        {
+          type: 'span',
+          op: '>=',
+          stream: {name: 'S', filter: {op: '==', path: ['event', 'season'], arg: {type: 'string', val: 'summer'}}},
+          path: ['event', 'temperature'],
+          arg: {type: 'double', val: 77.5}
+        },
+        {
+          type: 'span',
+          op: '==',
+          stream: {name: 'S', filter: {op: '==', path: ['event', 'season'], arg: {type: 'string', val: 'summer'}}},
+          path: ['event', 'sunny'],
+          arg: {type: 'bool', val: true}
+        }
+      ]
+    }
+  });
+});
+
+test('or stream filters', () => {
+  const s = stream('S', or(filter({ season: 'summer' }), filter({ season: 'winter' })));
+
+  expectAST(
+    select()(
+      s({ sunny: true })
+    )
+  ).toEqual({
+    'select': {
+      'type': 'span',
+      'op': '==',
+      'arg': {'type': 'bool', 'val': true},
+      'path': ['event', 'sunny'],
+      'stream': {
+        'name': 'S',
+        'filter': {
+          'expr': '||',
+          'args': [
+            {'op': '==', 'arg': {'type': 'string', 'val': 'summer'}, 'path': ['event', 'season']},
+            {'op': '==', 'arg': {'type': 'string', 'val': 'winter'}, 'path': ['event', 'season']}
+          ]
+        }
+      }
+    }
+  });
+});
