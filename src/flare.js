@@ -334,7 +334,7 @@ Flare.select = function (start, end) {
     } else if (arguments.length === 1) {
       return new Select(arguments[0], start, end);
     } else {
-      return new Select(new Serial(Array.from(arguments)), start, end);
+      return new Select(new And(Array.from(arguments)), start, end);
     }
   };
 };
