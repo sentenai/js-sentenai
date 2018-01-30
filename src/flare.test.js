@@ -361,3 +361,22 @@ test('or stream filters', () => {
     }
   });
 });
+
+test('multiple conditions is shorthand for &&', () => {
+  const s = stream('S');
+  const t = stream('T');
+
+  expectAST(
+    select()(
+      s({ sunny: true }),
+      t({ happy: true })
+    )
+  ).toEqual(
+    select()(
+      and(
+        s({ sunny: true }),
+        t({ happy: true })
+      )
+    ).ast
+  );
+});
