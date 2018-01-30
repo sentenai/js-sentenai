@@ -43,14 +43,15 @@ class Select {
   }
 
   get ast () {
-    var c = {'select': this.serial.ast};
-    if (this.start) {
-      c['start'] = this.start;
+    var ast = {'select': this.serial.ast};
+    if (this.start && this.end) {
+      ast.between = [this.start, this.end];
+    } else if (this.start) {
+      ast.after = this.start;
+    } else if (this.end) {
+      ast.before = this.end;
     }
-    if (this.end) {
-      c['end'] = this.end;
-    }
-    return c;
+    return ast;
   }
 }
 
@@ -327,14 +328,16 @@ class BoundSwitch {
 
 var Flare = {};
 
-Flare.select = function (start, end) {
+Flare.select = function (options) {
+  options || (options = {});
+
   return function () {
     if (arguments.length === 0) {
       throw FlareException('select * not supported yet');
     } else if (arguments.length === 1) {
-      return new Select(arguments[0], start, end);
+      return new Select(arguments[0], options.start, options.end);
     } else {
-      return new Select(new And(Array.from(arguments)), start, end);
+      return new Select(new And(Array.from(arguments)), options.start, options.end);
     }
   };
 };

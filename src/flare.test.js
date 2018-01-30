@@ -380,3 +380,37 @@ test('multiple conditions is shorthand for &&', () => {
     ).ast
   );
 });
+
+test('specifying start and end', () => {
+  const s = stream('S');
+
+  const cond = s({ sunny: true });
+  const base = cond.ast;
+
+  const start = '2017-06-01T00:00:00+00:00';
+  const end = '2017-06-12T00:00:00+00:00';
+
+  expectAST(
+    select({ start, end })(cond)
+  ).toEqual({
+    between: [
+      start,
+      end
+    ],
+    select: base
+  });
+
+  expectAST(
+    select({ start })(cond)
+  ).toEqual({
+    after: start,
+    select: base
+  });
+
+  expectAST(
+    select({ end })(cond)
+  ).toEqual({
+    before: end,
+    select: base
+  });
+});
