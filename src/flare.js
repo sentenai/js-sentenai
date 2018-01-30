@@ -208,7 +208,11 @@ class Width {
 
 class And {
   constructor (conds) {
-    this.conds = conds;
+    if (conds.length > 2) {
+      this.conds = [conds[0], new And(conds.slice(1))];
+    } else {
+      this.conds = conds;
+    }
   }
   get ast () {
     return {
@@ -224,8 +228,12 @@ class And {
 }
 
 class Or {
-  constructor (alternatives) {
-    this.conds = alternatives;
+  constructor (conds) {
+    if (conds.length > 2) {
+      this.conds = [conds[0], new Or(conds.slice(1))];
+    } else {
+      this.conds = conds;
+    }
   }
   get ast () {
     return {
