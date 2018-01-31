@@ -1,7 +1,5 @@
-require('es6-shim');
-const fetch = require('node-fetch');
-
-const { ast, stream, FlareException } = require('./flare');
+import fetch from 'node-fetch';
+import { ast, stream, FlareException } from './flare';
 
 // https://stackoverflow.com/a/27093173
 const minDate = new Date(1, 0, 1, 0, 0, 0);
@@ -338,4 +336,4 @@ function handleStatusCode (res) {
   }
 }
 
-module.exports = Client;
+export default Client;

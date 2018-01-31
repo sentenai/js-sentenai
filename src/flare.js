@@ -1,11 +1,4 @@
-require('es6-shim');
-
-var moment;
-try {
-  moment = require('moment-timezone');
-} catch (err) {}
-
-var FlareException = function () { };
+export function FlareException () { }
 
 function makeSpans (stream, conds, path) {
   if (typeof path === 'undefined') { path = []; }
@@ -334,9 +327,7 @@ class BoundSwitch {
   }
 }
 
-var Flare = {};
-
-Flare.select = function (options) {
+export function select (options) {
   options || (options = {});
 
   return function () {
@@ -348,9 +339,9 @@ Flare.select = function (options) {
       return new Select(new And(Array.from(arguments)), options.start, options.end);
     }
   };
-};
+}
 
-Flare.stream = function (name, filters) {
+export function stream (name, filters) {
   if (typeof name === 'object') {
     name = name.name;
   } else if (typeof name !== 'string') {
@@ -370,22 +361,22 @@ Flare.stream = function (name, filters) {
       throw FlareException('Too many arguments provided to stream');
     }
   };
-};
+}
 
-Flare.filter = function (map) {
+export function filter (map) {
   return new Filter(map);
-};
+}
 
-Flare.event = function (cond) {
+export function event (cond) {
   return new Switch(cond);
-};
+}
 
 /* parallel pattern match */
-Flare.any = function () { return new Any(Array.from(arguments)); };
-Flare.all = function () { return new All(Array.from(arguments)); };
+export function any () { return new Any(Array.from(arguments)); }
+export function all () { return new All(Array.from(arguments)); }
 
 /* versatile functions */
-Flare.and = function () {
+export function and () {
   if (arguments.length === 0) {
     throw new FlareException('and cannot have zero arguments');
   } else if (arguments.length === 1) {
@@ -393,9 +384,9 @@ Flare.and = function () {
   } else {
     return new And(Array.from(arguments));
   }
-};
+}
 
-Flare.or = function () {
+export function or () {
   if (arguments.length === 0) {
     throw new FlareException('or cannot have zero arguments');
   } else if (arguments.length === 1) {
@@ -403,29 +394,26 @@ Flare.or = function () {
   } else {
     return new Or(Array.from(arguments));
   }
-};
+}
 
 /* comparison operators */
-Flare.gt = function (val) { return new Cmp('>', val); };
-Flare.lt = function (val) { return new Cmp('<', val); };
-Flare.gte = function (val) { return new Cmp('>=', val); };
-Flare.lte = function (val) { return new Cmp('<=', val); };
-Flare.ne = function (val) { return new Cmp('!=', val); };
-Flare.eq = function (val) { return new Cmp('==', val); };
+export function gt (val) { return new Cmp('>', val); }
+export function lt (val) { return new Cmp('<', val); }
+export function gte (val) { return new Cmp('>=', val); }
+export function lte (val) { return new Cmp('<=', val); }
+export function ne (val) { return new Cmp('!=', val); }
+export function eq (val) { return new Cmp('==', val); }
 
 /* time related functions */
-Flare.utc = function (Y, m, d, H, M, S) { return new Date(Y, m || 1, d || 1, H || 0, M || 0, S || 0); };
-Flare.tz = function (tz) {
-  if (typeof moment !== 'undefined') {
-    return function (Y, m, d, H, M, S) {
-      return moment(new Date(Y, m || 1, d || 1, H || 0, M || 0, S || 0)).tz(tz);
-    };
-  } else {
-    throw new FlareException('The function `Flare.tz` requires optional dependency `moment-tz` to be installed.');
-  }
-};
+// Flare.utc = function (Y, m, d, H, M, S) { return new Date(Y, m || 1, d || 1, H || 0, M || 0, S || 0); };
+// Flare.tz = function (tz) {
+//   if (typeof moment !== 'undefined') {
+//     return function (Y, m, d, H, M, S) {
+//       return moment(new Date(Y, m || 1, d || 1, H || 0, M || 0, S || 0)).tz(tz);
+//     };
+//   } else {
+//     throw new FlareException('The function `Flare.tz` requires optional dependency `moment-tz` to be installed.');
+//   }
+// };
 
-Flare.ast = function (obj) { return JSON.stringify(obj.ast, null, 2); };
-Flare.FlareException = FlareException;
-
-module.exports = Flare;
+export function ast (obj) { return JSON.stringify(obj.ast, null, 2); }
