@@ -1,7 +1,7 @@
-const api = require('./src/api.js');
-const flare = require('./src/flare.js');
+import { default as Client } from './src/api.js';
+import * as flare from './src/flare.js';
 
-module.exports = {
-  'Client': api,
-  'flare': flare
-};
+export default {
+  Client,
+  flare
+}
