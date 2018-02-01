@@ -6,7 +6,9 @@
   "module": "index.js",
   "scripts": {
     "test": "npm run lint && jest",
-    "lint": "semistandard src/*"
+    "lint": "semistandard src/*",
+    "dist": "rollup -c rollup.conifg.js",
+    "publish": "npm run dist && npm publish"
   },
   "files": [
     "index.js",
