@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import fetch from 'isomorphic-fetch';
 import { ast, stream, FlareException } from './flare';
 
 // https://stackoverflow.com/a/27093173
