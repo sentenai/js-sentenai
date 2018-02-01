@@ -1,5 +1,5 @@
 /* global test, expect */
-var { stream, select, ast, lt, gte, gt, ne, and, or, all, any, event, filter } = require('../');
+const { stream, select, ast, lt, gte, gt, ne, and, or, all, any, event, filter } = require('../').default.flare;
 
 const expectAST = a => expect(JSON.parse(ast(a)));
 
