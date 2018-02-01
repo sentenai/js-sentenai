@@ -8,7 +8,7 @@
     "test": "npm run lint && jest",
     "lint": "semistandard src/*",
     "dist": "rollup -c rollup.conifg.js",
-    "publish": "npm run dist && npm publish"
+    "prepublishOnly": "npm run dist"
   },
   "files": [
     "index.js",
