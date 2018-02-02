@@ -7,7 +7,7 @@
   "scripts": {
     "test": "npm run lint && jest",
     "lint": "semistandard src/*",
-    "dist": "rollup -c rollup.conifg.js",
+    "dist": "rollup -c rollup.config.js",
     "prepublishOnly": "npm run dist"
   },
   "files": [
