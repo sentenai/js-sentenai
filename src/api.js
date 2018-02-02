@@ -1,4 +1,3 @@
-import fetch from 'isomorphic-fetch';
 import { ast, stream, FlareException } from './flare';
 
 // https://stackoverflow.com/a/27093173
@@ -139,10 +138,14 @@ class Client {
   constructor (config) {
     this.auth_key = config.auth_key;
     this.host = 'https://api.sentenai.com';
+
+    this._fetch = typeof window === 'object' && typeof window.fetch === 'function'
+      ? window.fetch
+      : require('isomorphic-fetch');
   }
 
   fetch (url, options = {}) {
-    return fetch(`${this.host}${url}`, Object.assign({}, options, {
+    return this._fetch(`${this.host}${url}`, Object.assign({}, options, {
       headers: options.headers || this.getHeaders()
     }));
   }
