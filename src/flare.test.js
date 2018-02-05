@@ -1,5 +1,5 @@
 /* global test, expect */
-const { stream, select, ast, lt, gte, gt, ne, and, or, all, any, event, filter } = require('../index.js').default.flare;
+const { stream, select, ast, lt, gte, gt, ne, and, or, all, any, event, filter, during } = require('../index.js').default.flare;
 
 const expectAST = a => expect(JSON.parse(ast(a)));
 
@@ -411,5 +411,48 @@ test('specifying start and end', () => {
   ).toEqual({
     before: end,
     select: base
+  });
+});
+
+test('during', () => {
+  const s = stream('S');
+
+  expectAST(
+    select()(during(
+      s({ foo: 'bar' }), s({ baz: gt(1.5) })
+    ))
+  ).toEqual({
+    'select': {
+      'type': 'during',
+      'conds': [{
+        'op': '==',
+        'arg': {
+          'type': 'string',
+          'val': 'bar'
+        },
+        'type': 'span',
+        'path': [
+          'event',
+          'foo'
+        ],
+        'stream': {
+          'name': 'S'
+        }
+      }, {
+        'op': '>',
+        'arg': {
+          'type': 'double',
+          'val': 1.5
+        },
+        'type': 'span',
+        'path': [
+          'event',
+          'baz'
+        ],
+        'stream': {
+          'name': 'S'
+        }
+      }]
+    }
   });
 });

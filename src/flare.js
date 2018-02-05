@@ -114,8 +114,9 @@ class Serial {
   }
 }
 
-class Any {
-  constructor (alternatives) {
+class Par {
+  constructor (type, alternatives) {
+    this.type = type;
     this.conds = alternatives;
   }
 
@@ -127,27 +128,8 @@ class Any {
 
   get ast () {
     return {
-      'type': 'any',
-      'conds': this.conds.map(a => a.ast)
-    };
-  }
-}
-
-class All {
-  constructor (alternatives) {
-    this.conds = alternatives;
-  }
-
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { return new Serial([this, cond]); }
-
-  get ast () {
-    return {
-      'type': 'all',
-      'conds': this.conds.map(a => a.ast)
+      type: this.type,
+      conds: this.conds.map(a => a.ast)
     };
   }
 }
@@ -373,8 +355,9 @@ export function event (cond) {
 }
 
 /* parallel pattern match */
-export function any () { return new Any(Array.from(arguments)); }
-export function all () { return new All(Array.from(arguments)); }
+export function any () { return new Par('any', Array.from(arguments)); }
+export function all () { return new Par('all', Array.from(arguments)); }
+export function during () { return new Par('during', Array.from(arguments)); }
 
 /* versatile functions */
 export function and () {

@@ -33,3 +33,8 @@ All testing is currently handled by [`jest`](https://facebook.github.io/jest/).
 $ npm install
 $ npm test
 ```
+
+To automatically run `jest` as you update code:
+```
+$ npx jest --watch
+```
