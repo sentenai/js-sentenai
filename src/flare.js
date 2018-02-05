@@ -259,7 +259,8 @@ class Cond {
     var t;
     switch (typeof (this.value)) {
       case 'number':
-        t = Number.isInteger(this.value) ? 'int' : 'double';
+        // t = Number.isInteger(this.value) ? 'int' : 'double';
+        t = 'double';
         break;
       case 'boolean':
         t = 'bool';

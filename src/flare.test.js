@@ -1,5 +1,5 @@
 /* global test, expect */
-const { stream, select, ast, lt, gte, gt, ne, and, or, all, any, event, filter } = require('../').default.flare;
+const { stream, select, ast, lt, gte, gt, ne, and, or, all, any, event, filter } = require('../index.js').default.flare;
 
 const expectAST = a => expect(JSON.parse(ast(a)));
 
@@ -34,7 +34,7 @@ test('any comparisons', () => {
     conds: [
       {
         stream: { name: 'moose' },
-        arg: { type: 'int', val: 0 },
+        arg: { type: 'double', val: 0 },
         path: [ 'event', 'x' ],
         type: 'span',
         op: '<'
@@ -247,7 +247,7 @@ test('nested relative spans', () => {
           op: '<',
           stream: {name: 'S'},
           path: ['event', 'x'],
-          arg: {type: 'int', val: 0}
+          arg: {type: 'double', val: 0}
         },
         {
           type: 'serial',
@@ -257,14 +257,14 @@ test('nested relative spans', () => {
               op: '==',
               stream: {name: 'S'},
               path: ['event', 'x'],
-              arg: {type: 'int', val: 0}
+              arg: {type: 'double', val: 0}
             },
             {
               type: 'span',
               op: '>',
               stream: {name: 'S'},
               path: ['event', 'x'],
-              arg: {type: 'int', val: 0},
+              arg: {type: 'double', val: 0},
               within: {seconds: 1}
             }
           ],
@@ -295,7 +295,7 @@ test('switches', () => {
         },
         {
           op: '>',
-          arg: { type: 'int', val: 0 },
+          arg: { type: 'double', val: 0 },
           type: 'span',
           path: [ 'event', 'x' ]
         }
