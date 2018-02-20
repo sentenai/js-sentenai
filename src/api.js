@@ -90,16 +90,17 @@ class Cursor {
           max: Math.max.apply(Math, deltas),
           median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
         };
-      })
+      });
   }
 
-  async _slice (cursorId, start, end, maxRetries = 3) {
+  _slice (cursorId, start, end, maxRetries = 3) {
     let cursor = `${cursorId.split('+')[0]}+${start.toISOString()}+${end.toISOString()}`;
-    const streams = {};
+    return this._recursiveSlice(cursor, start, end, maxRetries);
+  }
 
-    while (cursor) {
-      const response = await this._fetchEvents(cursor, maxRetries);
-      cursor = response.cursor;
+  _recursiveSlice (cursor, start, end, maxRetries, streams = {}) {
+    return this._fetchEvents(cursor, maxRetries).then(response => {
+      const nextCursor = response.cursor;
       const data = response.results;
 
       Object.keys(data.streams).forEach(queryHash => {
@@ -116,9 +117,13 @@ class Cursor {
         delete event.stream;
         events.push(event);
       });
-    }
 
-    return { start, end, streams: Object.values(streams) };
+      if (nextCursor) {
+        return this._recursiveSlice(nextCursor, start, end, maxRetries, streams);
+      } else {
+        return { start, end, streams: Object.values(streams) };
+      }
+    });
   }
 
   async _fetchEvents (cursor, maxRetries, retries = 0) {
