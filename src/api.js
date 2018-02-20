@@ -21,63 +21,29 @@ class Cursor {
     this._limit = limit;
   }
 
-  async json () {
-    await this.spans();
-    const data = await Promise.all(this._spans.map(async (span) =>
-      this._slice(span.cursor, span.start || minDate, span.end || maxDate)
-    ));
-    return JSON.stringify(data, null, 2);
+  json () {
+    return this.spans()
+      .then(spans =>
+        Promise.all(this._spans.map(span =>
+          this._slice(span.cursor, span.start || minDate, span.end || maxDate)
+        ))
+      ).then(data =>
+        JSON.stringify(data, null, 2)
+      );
   }
 
-  async spans () {
+  spans () {
     if (!this._spans) {
-      let id = this._queryId;
-      let allSpans = [];
-
-      while (id) {
-        const body = await this._fetchSpan(id, this._limit);
-
-        const spans = body.spans.map(s => Object.assign({}, s, {
-          start: s.start ? new Date(s.start) : null,
-          end: s.end ? new Date(s.end) : null
-        }));
-
-        id = body.cursor;
-        allSpans = allSpans.concat(spans);
-
-        if (typeof this._limit === 'number' && allSpans.length >= this._limit) {
-          break;
-        }
-      }
-
-      this._spans = allSpans;
+      return this._recursiveFetchSpan(this._queryId);
     }
+    return Promise.resolve(this._getSimpleSpans());
+  }
 
+  _getSimpleSpans () {
     return this._spans.map(s => ({
       start: s.start,
       end: s.end
     }));
-  }
-
-  // Get time-based stats about query results in milliseconds
-  async stats () {
-    await this.spans();
-
-    // TODO: why would a span _not_ have a start / end?
-    const deltas = this._spans.filter(
-      s => s.start && s.end
-    ).map(s => s.end - s.start);
-
-    // Don't divide by zero
-    if (!deltas.length) return {};
-
-    return {
-      count: this._spans.length,
-      mean: sum(deltas) / deltas.length,
-      min: Math.min.apply(Math, deltas),
-      max: Math.max.apply(Math, deltas),
-      median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
-    };
   }
 
   _fetchSpan (id, limit) {
@@ -86,13 +52,55 @@ class Cursor {
     return this._client.fetch(url).then(res => res.json());
   }
 
-  async _slice (cursorId, start, end, maxRetries = 3) {
-    let cursor = `${cursorId.split('+')[0]}+${start.toISOString()}+${end.toISOString()}`;
-    const streams = {};
+  _recursiveFetchSpan (id, allSpans = []) {
+    return this._fetchSpan(id, this._limit)
+      .then(body => {
+        const spans = body.spans.map(s => Object.assign({}, s, {
+          start: s.start ? new Date(s.start) : null,
+          end: s.end ? new Date(s.end) : null
+        }));
 
-    while (cursor) {
-      const response = await this._fetchEvents(cursor, maxRetries);
-      cursor = response.cursor;
+        const nextId = body.cursor;
+        allSpans = allSpans.concat(spans);
+
+        if (!nextId || (typeof this._limit === 'number' && allSpans.length >= this._limit)) {
+          this._spans = allSpans;
+          return this._getSimpleSpans();
+        }
+
+        return this._recursiveFetchSpan(nextId, allSpans);
+      });
+  }
+
+  // Get time-based stats about query results in milliseconds
+  stats () {
+    return this.spans()
+      .then(() => {
+        const deltas = this._spans.filter(
+          s => s.start && s.end
+        ).map(s => s.end - s.start);
+
+        // Don't divide by zero
+        if (!deltas.length) return {};
+
+        return {
+          count: this._spans.length,
+          mean: sum(deltas) / deltas.length,
+          min: Math.min.apply(Math, deltas),
+          max: Math.max.apply(Math, deltas),
+          median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
+        };
+      });
+  }
+
+  _slice (cursorId, start, end, maxRetries = 3) {
+    let cursor = `${cursorId.split('+')[0]}+${start.toISOString()}+${end.toISOString()}`;
+    return this._recursiveSlice(cursor, start, end, maxRetries);
+  }
+
+  _recursiveSlice (cursor, start, end, maxRetries, streams = {}) {
+    return this._fetchEvents(cursor, maxRetries).then(response => {
+      const nextCursor = response.cursor;
       const data = response.results;
 
       Object.keys(data.streams).forEach(queryHash => {
@@ -109,22 +117,26 @@ class Cursor {
         delete event.stream;
         events.push(event);
       });
-    }
 
-    return { start, end, streams: Object.values(streams) };
+      if (nextCursor) {
+        return this._recursiveSlice(nextCursor, start, end, maxRetries, streams);
+      } else {
+        return { start, end, streams: Object.values(streams) };
+      }
+    });
   }
 
-  async _fetchEvents (cursor, maxRetries, retries = 0) {
+  _fetchEvents (cursor, maxRetries, retries = 0) {
     return this._client.fetch(
       `/query/${cursor}/events`
-    ).then(async (res) => {
+    ).then(res => {
       if (res.ok) {
-        const results = await res.json();
-
-        return {
-          results,
-          cursor: res.headers.get('cursor') || null
-        };
+        return res.json().then(results => {
+          return {
+            results,
+            cursor: res.headers.get('cursor') || null
+          };
+        });
       } else if (retries < maxRetries) {
         return this._fetchEvents(cursor, maxRetries, retries + 1);
       } else {
@@ -166,22 +178,25 @@ class Client {
     );
   }
 
-  async streams (name = '', meta = {}) {
-    const streamList = await this.fetch('/streams').then(res => res.json());
-    name = name.toLowerCase();
+  streams (name = '', meta = {}) {
+    return this.fetch('/streams')
+      .then(res => res.json())
+      .then(streamList => {
+        name = name.toLowerCase();
 
-    return streamList.filter(s => {
-      let match = true;
-      if (name) {
-        match = s.name.toLowerCase().includes(name);
-      }
-      Object.keys(meta).forEach(key => {
-        match = match && s.meta[key] === meta[key];
+        return streamList.filter(s => {
+          let match = true;
+          if (name) {
+            match = s.name.toLowerCase().includes(name);
+          }
+          Object.keys(meta).forEach(key => {
+            match = match && s.meta[key] === meta[key];
+          });
+          return match;
+        // TODO: this is weird because `stream` just returns another function.
+        // doesn't print well, doesn't inform user of what's going on
+        }).map(s => stream(s));
       });
-      return match;
-    // TODO: this is weird because `stream` just returns another function.
-    // doesn't print well, doesn't inform user of what's going on
-    }).map(s => stream(s));
   }
 
   fields (stream) {
@@ -199,39 +214,45 @@ class Client {
   newest (stream) {
     return this.fetch(
       `/streams/${stream()}/newest`
-    ).then(async (res) => {
-      return {
-        event: await res.json(),
-        ts: new Date(res.headers.get('Timestamp')),
-        id: res.headers.get('Location')
-      };
-    });
+    ).then(res =>
+      res.json().then(event => {
+        return {
+          event,
+          ts: new Date(res.headers.get('Timestamp')),
+          id: res.headers.get('Location')
+        };
+      })
+    );
   }
 
   oldest (stream) {
     return this.fetch(
       `/streams/${stream()}/oldest`
-    ).then(async (res) => {
-      return {
-        event: await res.json(),
-        ts: new Date(res.headers.get('Timestamp')),
-        id: res.headers.get('Location')
-      };
-    });
+    ).then(res =>
+      res.json().then(event => {
+        return {
+          event,
+          ts: new Date(res.headers.get('Timestamp')),
+          id: res.headers.get('Location')
+        };
+      })
+    );
   }
 
   get (stream, eid) {
     const base = `/streams/${stream()}`;
     const url = eid ? `${base}/events/${eid}` : base;
 
-    return this.fetch(url).then(async (res) => {
+    return this.fetch(url).then(res => {
       handleStatusCode(res);
       if (eid) {
-        return {
-          id: res.headers.get('location'),
-          ts: res.headers.get('timestamp'),
-          event: await res.json()
-        };
+        return res.json().then(event => {
+          return {
+            event,
+            id: res.headers.get('location'),
+            ts: res.headers.get('timestamp')
+          };
+        });
       } else {
         return res.json();
       }
@@ -309,11 +330,12 @@ class Client {
   range (stream, start, end) {
     const esc = encodeURIComponent;
     const url = `/streams/${stream()}/start/${esc(start.toISOString())}/end/${esc(end.toISOString())}`;
-    return this.fetch(url).then(async (res) => {
+    return this.fetch(url).then(res => {
       handleStatusCode(res);
-      const text = await res.text();
-      return text.split('\n').map(line => JSON.parse(line));
-    });
+      return res.text();
+    }).then(text =>
+      text.split('\n').map(line => JSON.parse(line))
+    );
   }
 }
 
