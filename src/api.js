@@ -29,37 +29,47 @@ class Cursor {
         ))
       ).then(data =>
         JSON.stringify(data, null, 2)
-      )
+      );
   }
 
-  async spans () {
+  spans () {
     if (!this._spans) {
-      let id = this._queryId;
-      let allSpans = [];
+      return this._recursiveFetchSpan(this._queryId);
+    }
+    return Promise.resolve(this._getSimpleSpans());
+  }
 
-      while (id) {
-        const body = await this._fetchSpan(id, this._limit);
+  _getSimpleSpans () {
+    return this._spans.map(s => ({
+      start: s.start,
+      end: s.end
+    }));
+  }
 
+  _fetchSpan (id, limit) {
+    const base = `/query/${id}/spans`;
+    const url = typeof limit === 'number' ? `${base}?${queryString({ limit })}` : base;
+    return this._client.fetch(url).then(res => res.json());
+  }
+
+  _recursiveFetchSpan (id, allSpans = []) {
+    return this._fetchSpan(id, this._limit)
+      .then(body => {
         const spans = body.spans.map(s => Object.assign({}, s, {
           start: s.start ? new Date(s.start) : null,
           end: s.end ? new Date(s.end) : null
         }));
 
-        id = body.cursor;
+        const nextId = body.cursor;
         allSpans = allSpans.concat(spans);
 
-        if (typeof this._limit === 'number' && allSpans.length >= this._limit) {
-          break;
+        if (!nextId || (typeof this._limit === 'number' && allSpans.length >= this._limit)) {
+          this._spans = allSpans;
+          return this._getSimpleSpans();
         }
-      }
 
-      this._spans = allSpans;
-    }
-
-    return this._spans.map(s => ({
-      start: s.start,
-      end: s.end
-    }));
+        return this._recursiveFetchSpan(nextId, allSpans);
+      });
   }
 
   // Get time-based stats about query results in milliseconds
@@ -81,12 +91,6 @@ class Cursor {
       max: Math.max.apply(Math, deltas),
       median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
     };
-  }
-
-  _fetchSpan (id, limit) {
-    const base = `/query/${id}/spans`;
-    const url = typeof limit === 'number' ? `${base}?${queryString({ limit })}` : base;
-    return this._client.fetch(url).then(res => res.json());
   }
 
   async _slice (cursorId, start, end, maxRetries = 3) {
