@@ -126,17 +126,17 @@ class Cursor {
     });
   }
 
-  async _fetchEvents (cursor, maxRetries, retries = 0) {
+  _fetchEvents (cursor, maxRetries, retries = 0) {
     return this._client.fetch(
       `/query/${cursor}/events`
-    ).then(async (res) => {
+    ).then(res => {
       if (res.ok) {
-        const results = await res.json();
-
-        return {
-          results,
-          cursor: res.headers.get('cursor') || null
-        };
+        return res.json().then(results => {
+          return {
+            results,
+            cursor: res.headers.get('cursor') || null
+          };
+        })
       } else if (retries < maxRetries) {
         return this._fetchEvents(cursor, maxRetries, retries + 1);
       } else {
