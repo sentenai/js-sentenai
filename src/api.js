@@ -73,24 +73,24 @@ class Cursor {
   }
 
   // Get time-based stats about query results in milliseconds
-  async stats () {
-    await this.spans();
+  stats () {
+    return this.spans()
+      .then(() => {
+        const deltas = this._spans.filter(
+          s => s.start && s.end
+        ).map(s => s.end - s.start);
 
-    // TODO: why would a span _not_ have a start / end?
-    const deltas = this._spans.filter(
-      s => s.start && s.end
-    ).map(s => s.end - s.start);
+        // Don't divide by zero
+        if (!deltas.length) return {};
 
-    // Don't divide by zero
-    if (!deltas.length) return {};
-
-    return {
-      count: this._spans.length,
-      mean: sum(deltas) / deltas.length,
-      min: Math.min.apply(Math, deltas),
-      max: Math.max.apply(Math, deltas),
-      median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
-    };
+        return {
+          count: this._spans.length,
+          mean: sum(deltas) / deltas.length,
+          min: Math.min.apply(Math, deltas),
+          max: Math.max.apply(Math, deltas),
+          median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
+        };
+      })
   }
 
   async _slice (cursorId, start, end, maxRetries = 3) {
