@@ -21,12 +21,15 @@ class Cursor {
     this._limit = limit;
   }
 
-  async json () {
-    await this.spans();
-    const data = await Promise.all(this._spans.map(async (span) =>
-      this._slice(span.cursor, span.start || minDate, span.end || maxDate)
-    ));
-    return JSON.stringify(data, null, 2);
+  json () {
+    return this.spans()
+      .then(spans =>
+        Promise.all(this._spans.map(span =>
+          this._slice(span.cursor, span.start || minDate, span.end || maxDate)
+        ))
+      ).then(data =>
+        JSON.stringify(data, null, 2)
+      )
   }
 
   async spans () {
