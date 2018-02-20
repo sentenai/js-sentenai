@@ -136,7 +136,7 @@ class Cursor {
             results,
             cursor: res.headers.get('cursor') || null
           };
-        })
+        });
       } else if (retries < maxRetries) {
         return this._fetchEvents(cursor, maxRetries, retries + 1);
       } else {
@@ -214,39 +214,45 @@ class Client {
   newest (stream) {
     return this.fetch(
       `/streams/${stream()}/newest`
-    ).then(async (res) => {
-      return {
-        event: await res.json(),
-        ts: new Date(res.headers.get('Timestamp')),
-        id: res.headers.get('Location')
-      };
-    });
+    ).then(res =>
+      res.json().then(event => {
+        return {
+          event,
+          ts: new Date(res.headers.get('Timestamp')),
+          id: res.headers.get('Location')
+        };
+      })
+    );
   }
 
   oldest (stream) {
     return this.fetch(
       `/streams/${stream()}/oldest`
-    ).then(async (res) => {
-      return {
-        event: await res.json(),
-        ts: new Date(res.headers.get('Timestamp')),
-        id: res.headers.get('Location')
-      };
-    });
+    ).then(res =>
+      res.json().then(event => {
+        return {
+          event,
+          ts: new Date(res.headers.get('Timestamp')),
+          id: res.headers.get('Location')
+        };
+      })
+    );
   }
 
   get (stream, eid) {
     const base = `/streams/${stream()}`;
     const url = eid ? `${base}/events/${eid}` : base;
 
-    return this.fetch(url).then(async (res) => {
+    return this.fetch(url).then(res => {
       handleStatusCode(res);
       if (eid) {
-        return {
-          id: res.headers.get('location'),
-          ts: res.headers.get('timestamp'),
-          event: await res.json()
-        };
+        return res.json().then(event => {
+          return {
+            event,
+            id: res.headers.get('location'),
+            ts: res.headers.get('timestamp')
+          };
+        });
       } else {
         return res.json();
       }
@@ -324,11 +330,12 @@ class Client {
   range (stream, start, end) {
     const esc = encodeURIComponent;
     const url = `/streams/${stream()}/start/${esc(start.toISOString())}/end/${esc(end.toISOString())}`;
-    return this.fetch(url).then(async (res) => {
+    return this.fetch(url).then(res => {
       handleStatusCode(res);
-      const text = await res.text();
-      return text.split('\n').map(line => JSON.parse(line));
-    });
+      return res.text();
+    }).then(text =>
+      text.split('\n').map(line => JSON.parse(line))
+    );
   }
 }
 
