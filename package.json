@@ -35,7 +35,7 @@
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
-    "babel-preset-env": "^1.6.1",
+    "babel-preset-env": "1.7.0",
     "babel-preset-es2015-rollup": "^3.0.0",
     "jest": "23.6.0",
     "rollup": "^0.55.1",
