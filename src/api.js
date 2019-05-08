@@ -152,7 +152,7 @@ class Client {
     this.host = config.host || 'https://api.sentenai.com';
 
     this._fetch = typeof window === 'object' && typeof window.fetch === 'function'
-      ? window.fetch
+      ? window.fetch.bind(window)
       : require('isomorphic-fetch');
   }
 
