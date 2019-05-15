@@ -327,7 +327,7 @@ class Client {
       handleStatusCode(res);
       return res.text();
     }).then(text =>
-      text.split('\n').map(line => JSON.parse(line))
+      JSON.parse(text)
     );
   }
 }
