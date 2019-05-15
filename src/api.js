@@ -36,14 +36,7 @@ class Cursor {
     if (!this._spans) {
       return this._recursiveFetchSpan(this._queryId);
     }
-    return Promise.resolve(this._getSimpleSpans());
-  }
-
-  _getSimpleSpans () {
-    return this._spans.map(s => ({
-      start: s.start,
-      end: s.end
-    }));
+    return Promise.resolve(this._spans);
   }
 
   _fetchSpan (id, limit) {
@@ -65,7 +58,7 @@ class Cursor {
 
         if (!nextId || (typeof this._limit === 'number' && allSpans.length >= this._limit)) {
           this._spans = allSpans;
-          return this._getSimpleSpans();
+          return this._spans;
         }
 
         return this._recursiveFetchSpan(nextId, allSpans);
