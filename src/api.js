@@ -5,13 +5,13 @@ const minDate = new Date(1, 0, 1, 0, 0, 0);
 const maxDate = new Date(9990, 11, 31, 23, 59, 59);
 
 // TODO: improve custom exceptions
-const SentenaiException = function () {};
-const AuthenticationError = function () {};
-const APIError = function () {};
-const NotFound = function () {};
+class SentenaiException extends Error {};
+class AuthenticationError extends Error {};
+class APIError extends Error {};
+class NotFound extends Error {};
 const sum = list => list.reduce((total, num) => total + num, 0);
 
-class Cursor {
+class Query {
   // TODO: add `returning` a.k.a. projections
   constructor (client, query, queryId, limit) {
     this._client = client;
@@ -51,7 +51,7 @@ class Cursor {
         const spans = body.spans.map(s => Object.assign({}, s, {
           start: s.start ? new Date(s.start) : null,
           end: s.end ? new Date(s.end) : null
-        }));
+        })).map((span) => new Span(this._client, span));
 
         const nextId = body.cursor;
         allSpans = allSpans.concat(spans);
@@ -139,6 +139,37 @@ class Cursor {
   }
 }
 
+class Span {
+  constructor (client, { cursor, start, end }) {
+    this._client = client;
+    this.cursor = cursor;
+    this.start = start;
+    this.end = end;
+  }
+
+  // TODO: this probably needs to chase `nextCursor`
+  events (maxRetries = 3, retries = 0) {
+    const cursor = this.cursor
+    return this._client.fetch(
+      `/query/${cursor}/events`
+    ).then(res => {
+      if (res.ok) {
+        return res.json().then(results => {
+          return {
+            results,
+            cursor: res.headers.get('cursor') || null
+          };
+        });
+      } else if (retries < maxRetries) {
+        return this.events(cursor, maxRetries, retries + 1);
+      } else {
+        console.log('ugh', res)
+        throw new SentenaiException('Failed to get cursor');
+      }
+    });
+  }
+}
+
 class Client {
   constructor (config) {
     this.auth_key = config.auth_key;
@@ -167,7 +198,7 @@ class Client {
       method: 'POST',
       body: ast(query)
     }).then(res =>
-      new Cursor(this, query, res.headers.get('location'), limit)
+      new Query(this, query, res.headers.get('location'), limit)
     );
   }
 
