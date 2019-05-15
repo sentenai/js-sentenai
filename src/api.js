@@ -327,7 +327,9 @@ class Client {
       handleStatusCode(res);
       return res.text();
     }).then(text =>
-      JSON.parse(text)
+      JSON.parse(text).map(item => Object.assign({}, item, {
+        ts: new Date(item.ts)
+      }))
     );
   }
 }
