@@ -163,7 +163,6 @@ class Span {
       } else if (retries < maxRetries) {
         return this.events(cursor, maxRetries, retries + 1);
       } else {
-        console.log('ugh', res)
         throw new SentenaiException('Failed to get cursor');
       }
     });
@@ -182,7 +181,7 @@ class Client {
 
   fetch (url, options = {}) {
     return this._fetch(`${this.host}${url}`, Object.assign({}, options, {
-      headers: options.headers || this.getHeaders()
+      headers: Object.assign({}, this.getHeaders(), options.headers)
     }));
   }
 
@@ -194,10 +193,16 @@ class Client {
   }
 
   query (query, limit) {
-    return this.fetch('/query', {
-      method: 'POST',
+    let options = typeof query === 'string' ? {
+      body: query,
+      headers: { 'Content-Type': 'text/neoflare' }
+    } : {
       body: ast(query)
-    }).then(res =>
+    }
+
+    return this.fetch('/query', Object.assign({
+      method: 'POST'
+    }, options)).then(res =>
       new Query(this, query, res.headers.get('location'), limit)
     );
   }
