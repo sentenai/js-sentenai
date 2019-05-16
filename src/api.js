@@ -198,13 +198,17 @@ class Client {
       headers: { 'Content-Type': 'text/neoflare' }
     } : {
       body: ast(query)
-    }
+    };
 
     return this.fetch('/query', Object.assign({
       method: 'POST'
-    }, options)).then(res =>
-      new Query(this, query, res.headers.get('location'), limit)
-    );
+    }, options)).then(res => {
+      if (res.status === 201) {
+        return new Query(this, query, res.headers.get('location'), limit);
+      } else {
+        return res.json().then(body => { throw new SentenaiException(body.message) });
+      }
+    });
   }
 
   streams (name = '', meta = {}) {
