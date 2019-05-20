@@ -400,4 +400,4 @@ export function eq (val) { return new Cmp('==', val); }
 //   }
 // };
 
-export function ast (obj) { return JSON.stringify(obj.ast, null, 2); }
+export function ast (obj, indent = 0) { return JSON.stringify(obj.ast, null, indent); }
