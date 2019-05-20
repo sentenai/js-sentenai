@@ -5,10 +5,10 @@ const minDate = new Date(1, 0, 1, 0, 0, 0);
 const maxDate = new Date(9990, 11, 31, 23, 59, 59);
 
 // TODO: improve custom exceptions
-class SentenaiException extends Error {};
-class AuthenticationError extends Error {};
-class APIError extends Error {};
-class NotFound extends Error {};
+class SentenaiException extends Error {}
+class AuthenticationError extends Error {}
+class APIError extends Error {}
+class NotFound extends Error {}
 const sum = list => list.reduce((total, num) => total + num, 0);
 
 class Query {
@@ -149,7 +149,7 @@ class Span {
 
   // TODO: this probably needs to chase `nextCursor`
   events (maxRetries = 3, retries = 0) {
-    const cursor = this.cursor
+    const cursor = this.cursor;
     return this._client.fetch(
       `/query/${cursor}/events`
     ).then(res => {
@@ -206,7 +206,7 @@ class Client {
       if (res.status === 201) {
         return new Query(this, query, res.headers.get('location'), limit);
       } else {
-        return res.json().then(body => { throw new SentenaiException(body.message) });
+        return res.json().then(body => { throw new SentenaiException(body.message); });
       }
     });
   }
