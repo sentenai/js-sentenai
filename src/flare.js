@@ -1,7 +1,9 @@
-export function FlareException () { }
+export function FlareException() {}
 
-function makeSpans (stream, conds, path) {
-  if (typeof path === 'undefined') { path = []; }
+function makeSpans(stream, conds, path) {
+  if (typeof path === 'undefined') {
+    path = [];
+  }
   var ands = [];
   for (var key in conds) {
     var p = path.slice();
@@ -29,14 +31,14 @@ function makeSpans (stream, conds, path) {
 }
 
 class Select {
-  constructor (serial, start, end) {
+  constructor(serial, start, end) {
     this.serial = serial;
     this.start = start;
     this.end = end;
   }
 
-  get ast () {
-    var ast = {'select': this.serial.ast};
+  get ast() {
+    var ast = { select: this.serial.ast };
     if (this.start && this.end) {
       ast.between = [this.start, this.end];
     } else if (this.start) {
@@ -49,7 +51,7 @@ class Select {
 }
 
 class Delta {
-  constructor (args) {
+  constructor(args) {
     this.years = args.years;
     this.months = args.months;
     this.weeks = args.weeks;
@@ -59,7 +61,7 @@ class Delta {
     this.seconds = args.seconds;
   }
 
-  get ast () {
+  get ast() {
     var d = {};
     for (let key in this) {
       if (typeof this[key] !== 'undefined') {
@@ -71,13 +73,14 @@ class Delta {
 }
 
 class Stream {
-  constructor (name, _filter) {
+  constructor(name, _filter) {
     this.name = name;
-    this._filter = _filter && _filter.constructor === Object ? new Filter(_filter) : _filter;
+    this._filter =
+      _filter && _filter.constructor === Object ? new Filter(_filter) : _filter;
   }
 
-  get ast () {
-    const ast = { 'name': this.name };
+  get ast() {
+    const ast = { name: this.name };
     if (this._filter) {
       ast.filter = this._filter.ast;
     }
@@ -86,47 +89,68 @@ class Stream {
 }
 
 class Filter {
-  constructor (map) {
+  constructor(map) {
     this._map = map;
   }
 
-  get ast () {
+  get ast() {
     return makeSpans(undefined, this._map, ['event']).ast;
   }
 }
 
 class Serial {
-  constructor (sequence) {
+  constructor(sequence) {
     this.sequence = sequence;
   }
 
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { this.sequence.push(cond); return this; }
+  after(delta) {
+    return new Spacing(this, new Delta(delta));
+  }
+  within(delta) {
+    return new Spacing(this, undefined, new Delta(delta));
+  }
+  min(delta) {
+    return new Width(this, new Delta(delta));
+  }
+  max(delta) {
+    return new Width(this, undefined, new Delta(delta));
+  }
+  then(cond) {
+    this.sequence.push(cond);
+    return this;
+  }
 
-  get ast () {
+  get ast() {
     return {
-      'type': 'serial',
-      'conds': this.sequence.map(a => a.ast)
+      type: 'serial',
+      conds: this.sequence.map(a => a.ast)
     };
   }
 }
 
 class Par {
-  constructor (type, alternatives) {
+  constructor(type, alternatives) {
     this.type = type;
     this.conds = alternatives;
   }
 
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { return new Serial([this, cond]); }
+  after(delta) {
+    return new Spacing(this, new Delta(delta));
+  }
+  within(delta) {
+    return new Spacing(this, undefined, new Delta(delta));
+  }
+  min(delta) {
+    return new Width(this, new Delta(delta));
+  }
+  max(delta) {
+    return new Width(this, undefined, new Delta(delta));
+  }
+  then(cond) {
+    return new Serial([this, cond]);
+  }
 
-  get ast () {
+  get ast() {
     return {
       type: this.type,
       conds: this.conds.map(a => a.ast)
@@ -135,111 +159,169 @@ class Par {
 }
 
 class Spacing {
-  constructor (cond, after, within) {
+  constructor(cond, after, within) {
     this.cond = cond;
     this._after = after;
     this._within = within;
   }
 
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { return new Serial([this, cond]); }
+  after(delta) {
+    return new Spacing(this, new Delta(delta));
+  }
+  within(delta) {
+    return new Spacing(this, undefined, new Delta(delta));
+  }
+  min(delta) {
+    return new Width(this, new Delta(delta));
+  }
+  max(delta) {
+    return new Width(this, undefined, new Delta(delta));
+  }
+  then(cond) {
+    return new Serial([this, cond]);
+  }
 
-  get ast () {
+  get ast() {
     var c = this.cond.ast;
-    if (this._after) { c['after'] = this._after.ast; }
-    if (this._within) { c['within'] = this._within.ast; }
+    if (this._after) {
+      c['after'] = this._after.ast;
+    }
+    if (this._within) {
+      c['within'] = this._within.ast;
+    }
     return c;
   }
 }
 
 class Width {
-  constructor (cond, min, max) {
+  constructor(cond, min, max) {
     this.cond = cond;
     this._min = min;
     this._max = max;
   }
 
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { return new Serial([this, cond]); }
+  after(delta) {
+    return new Spacing(this, new Delta(delta));
+  }
+  within(delta) {
+    return new Spacing(this, undefined, new Delta(delta));
+  }
+  min(delta) {
+    return new Width(this, new Delta(delta));
+  }
+  max(delta) {
+    return new Width(this, undefined, new Delta(delta));
+  }
+  then(cond) {
+    return new Serial([this, cond]);
+  }
 
-  get ast () {
+  get ast() {
     var c = this.cond.ast;
     // TODO: min/max are instances of Delta, this comparison will always fail
     if (this._min && this._max && this._min === this._max) {
       c['for'] = this._min.ast;
     } else {
-      if (this._min) { c['for'] = {'at-least': this._min.ast}; }
-      if (this._max) { c['for'] = {'at-most': this._max.ast}; }
+      if (this._min) {
+        c['for'] = { 'at-least': this._min.ast };
+      }
+      if (this._max) {
+        c['for'] = { 'at-most': this._max.ast };
+      }
     }
     return c;
   }
 }
 
 class And {
-  constructor (conds) {
+  constructor(conds) {
     if (conds.length > 2) {
       this.conds = [conds[0], new And(conds.slice(1))];
     } else {
       this.conds = conds;
     }
   }
-  get ast () {
+  get ast() {
     return {
       expr: '&&',
       args: this.conds.map(a => a.ast)
     };
   }
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { return new Serial([this, cond]); }
+  after(delta) {
+    return new Spacing(this, new Delta(delta));
+  }
+  within(delta) {
+    return new Spacing(this, undefined, new Delta(delta));
+  }
+  min(delta) {
+    return new Width(this, new Delta(delta));
+  }
+  max(delta) {
+    return new Width(this, undefined, new Delta(delta));
+  }
+  then(cond) {
+    return new Serial([this, cond]);
+  }
 }
 
 class Or {
-  constructor (conds) {
+  constructor(conds) {
     if (conds.length > 2) {
       this.conds = [conds[0], new Or(conds.slice(1))];
     } else {
       this.conds = conds;
     }
   }
-  get ast () {
+  get ast() {
     return {
       expr: '||',
       args: this.conds.map(a => a.ast)
     };
   }
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { return new Serial([this, cond]); }
+  after(delta) {
+    return new Spacing(this, new Delta(delta));
+  }
+  within(delta) {
+    return new Spacing(this, undefined, new Delta(delta));
+  }
+  min(delta) {
+    return new Width(this, new Delta(delta));
+  }
+  max(delta) {
+    return new Width(this, undefined, new Delta(delta));
+  }
+  then(cond) {
+    return new Serial([this, cond]);
+  }
 }
 
 class Cond {
-  constructor (path, op, value, stream) {
+  constructor(path, op, value, stream) {
     this.path = path;
     this.op = op;
     this.value = value;
     this.stream = stream;
   }
 
-  after (delta) { return new Spacing(this, new Delta(delta)); }
-  within (delta) { return new Spacing(this, undefined, new Delta(delta)); }
-  min (delta) { return new Width(this, new Delta(delta)); }
-  max (delta) { return new Width(this, undefined, new Delta(delta)); }
-  then (cond) { return new Serial([this, cond]); }
+  after(delta) {
+    return new Spacing(this, new Delta(delta));
+  }
+  within(delta) {
+    return new Spacing(this, undefined, new Delta(delta));
+  }
+  min(delta) {
+    return new Width(this, new Delta(delta));
+  }
+  max(delta) {
+    return new Width(this, undefined, new Delta(delta));
+  }
+  then(cond) {
+    return new Serial([this, cond]);
+  }
 
-  get ast () {
+  get ast() {
     var t;
-    switch (typeof (this.value)) {
+    switch (typeof this.value) {
       case 'number':
         // t = Number.isInteger(this.value) ? 'int' : 'double';
         t = 'double';
@@ -255,9 +337,9 @@ class Cond {
     }
 
     var c = {
-      'path': this.path,
-      'op': this.op,
-      'arg': {'type': t, 'val': this.value}
+      path: this.path,
+      op: this.op,
+      arg: { type: t, val: this.value }
     };
     if (typeof this.stream !== 'undefined') {
       c['stream'] = this.stream.ast;
@@ -268,14 +350,14 @@ class Cond {
 }
 
 class Cmp {
-  constructor (op, val) {
+  constructor(op, val) {
     this.op = op;
     this.val = val;
   }
 }
 
 class Switch {
-  constructor (conds) {
+  constructor(conds) {
     if (Array.isArray(conds)) {
       this.conds = conds;
     } else {
@@ -283,54 +365,62 @@ class Switch {
     }
   }
 
-  then (cond) {
+  then(cond) {
     return new Switch(this.conds.concat(cond));
   }
 
-  get ast () {
-    throw new FlareException('Must bind a switch to a stream before producing an AST');
+  get ast() {
+    throw new FlareException(
+      'Must bind a switch to a stream before producing an AST'
+    );
   }
 }
 
 class BoundSwitch {
-  constructor (stream, sw) {
+  constructor(stream, sw) {
     this.stream = stream;
     this.switch = sw;
   }
 
-  get ast () {
+  get ast() {
     return {
       type: 'switch',
       stream: { name: this.stream.name },
-      conds: this.switch.conds.map(cond => makeSpans(this.stream, cond, ['event']).ast).map(span => {
-        delete span.stream;
-        return span;
-      })
+      conds: this.switch.conds
+        .map(cond => makeSpans(this.stream, cond, ['event']).ast)
+        .map(span => {
+          delete span.stream;
+          return span;
+        })
     };
   }
 }
 
-export function select (options) {
+export function select(options) {
   options || (options = {});
 
-  return function () {
+  return function() {
     if (arguments.length === 0) {
       throw FlareException('select * not supported yet');
     } else if (arguments.length === 1) {
       return new Select(arguments[0], options.start, options.end);
     } else {
-      return new Select(new And(Array.from(arguments)), options.start, options.end);
+      return new Select(
+        new And(Array.from(arguments)),
+        options.start,
+        options.end
+      );
     }
   };
 }
 
-export function stream (name, filters) {
+export function stream(name, filters) {
   if (typeof name === 'object') {
     name = name.name;
   } else if (typeof name !== 'string') {
     throw new FlareException('bad stream arguments');
   }
-  return function () {
+  return function() {
     if (arguments.length < 1) {
       // TODO: this might be mixing responsibilities too much
       return name;
@@ -346,21 +436,27 @@ export function stream (name, filters) {
   };
 }
 
-export function filter (map) {
+export function filter(map) {
   return new Filter(map);
 }
 
-export function event (cond) {
+export function event(cond) {
   return new Switch(cond);
 }
 
 /* parallel pattern match */
-export function any () { return new Par('any', Array.from(arguments)); }
-export function all () { return new Par('all', Array.from(arguments)); }
-export function during () { return new Par('during', Array.from(arguments)); }
+export function any() {
+  return new Par('any', Array.from(arguments));
+}
+export function all() {
+  return new Par('all', Array.from(arguments));
+}
+export function during() {
+  return new Par('during', Array.from(arguments));
+}
 
 /* versatile functions */
-export function and () {
+export function and() {
   if (arguments.length === 0) {
     throw new FlareException('and cannot have zero arguments');
   } else if (arguments.length === 1) {
@@ -370,7 +466,7 @@ export function and () {
   }
 }
 
-export function or () {
+export function or() {
   if (arguments.length === 0) {
     throw new FlareException('or cannot have zero arguments');
   } else if (arguments.length === 1) {
@@ -381,12 +477,24 @@ export function or () {
 }
 
 /* comparison operators */
-export function gt (val) { return new Cmp('>', val); }
-export function lt (val) { return new Cmp('<', val); }
-export function gte (val) { return new Cmp('>=', val); }
-export function lte (val) { return new Cmp('<=', val); }
-export function ne (val) { return new Cmp('!=', val); }
-export function eq (val) { return new Cmp('==', val); }
+export function gt(val) {
+  return new Cmp('>', val);
+}
+export function lt(val) {
+  return new Cmp('<', val);
+}
+export function gte(val) {
+  return new Cmp('>=', val);
+}
+export function lte(val) {
+  return new Cmp('<=', val);
+}
+export function ne(val) {
+  return new Cmp('!=', val);
+}
+export function eq(val) {
+  return new Cmp('==', val);
+}
 
 /* time related functions */
 // Flare.utc = function (Y, m, d, H, M, S) { return new Date(Y, m || 1, d || 1, H || 0, M || 0, S || 0); };
@@ -400,4 +508,6 @@ export function eq (val) { return new Cmp('==', val); }
 //   }
 // };
 
-export function ast (obj, indent = 0) { return JSON.stringify(obj.ast, null, indent); }
+export function ast(obj, indent = 0) {
+  return JSON.stringify(obj.ast, null, indent);
+}

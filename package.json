@@ -4,8 +4,7 @@
   "description": "JavaScript client for Sentenai",
   "main": "build/index.js",
   "scripts": {
-    "test": "npm run lint && jest",
-    "lint": "semistandard src/*",
+    "test": "jest",
     "dist": "rollup -c rollup.config.js",
     "prepublishOnly": "npm run dist"
   },
@@ -40,7 +39,6 @@
     "jest": "23.6.0",
     "rollup": "^0.55.1",
     "rollup-plugin-async": "^1.2.0",
-    "rollup-plugin-babel": "^3.0.3",
-    "semistandard": "^11.0.0"
+    "rollup-plugin-babel": "^3.0.3"
   }
 }

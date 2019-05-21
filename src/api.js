@@ -13,7 +13,7 @@ const sum = list => list.reduce((total, num) => total + num, 0);
 
 class Query {
   // TODO: add `returning` a.k.a. projections
-  constructor (client, query, queryId, limit) {
+  constructor(client, query, queryId, limit) {
     this._client = client;
     this._query = query;
     this._queryId = queryId;
@@ -21,77 +21,86 @@ class Query {
     this._limit = limit;
   }
 
-  json () {
+  json() {
     return this.spans()
       .then(spans =>
-        Promise.all(this._spans.map(span =>
-          this._slice(span.cursor, span.start || minDate, span.end || maxDate)
-        ))
-      ).then(data =>
-        JSON.stringify(data, null, 2)
-      );
+        Promise.all(
+          this._spans.map(span =>
+            this._slice(span.cursor, span.start || minDate, span.end || maxDate)
+          )
+        )
+      )
+      .then(data => JSON.stringify(data, null, 2));
   }
 
-  spans () {
+  spans() {
     if (!this._spans) {
       return this._recursiveFetchSpan(this._queryId);
     }
     return Promise.resolve(this._spans);
   }
 
-  _fetchSpan (id, limit) {
+  _fetchSpan(id, limit) {
     const base = `/query/${id}/spans`;
-    const url = typeof limit === 'number' ? `${base}?${queryString({ limit })}` : base;
+    const url =
+      typeof limit === 'number' ? `${base}?${queryString({ limit })}` : base;
     return this._client.fetch(url).then(res => res.json());
   }
 
-  _recursiveFetchSpan (id, allSpans = []) {
-    return this._fetchSpan(id, this._limit)
-      .then(body => {
-        const spans = body.spans.map(s => Object.assign({}, s, {
-          start: s.start ? new Date(s.start) : null,
-          end: s.end ? new Date(s.end) : null
-        })).map((span) => new Span(this._client, span));
+  _recursiveFetchSpan(id, allSpans = []) {
+    return this._fetchSpan(id, this._limit).then(body => {
+      const spans = body.spans
+        .map(s =>
+          Object.assign({}, s, {
+            start: s.start ? new Date(s.start) : null,
+            end: s.end ? new Date(s.end) : null
+          })
+        )
+        .map(span => new Span(this._client, span));
 
-        const nextId = body.cursor;
-        allSpans = allSpans.concat(spans);
+      const nextId = body.cursor;
+      allSpans = allSpans.concat(spans);
 
-        if (!nextId || (typeof this._limit === 'number' && allSpans.length >= this._limit)) {
-          this._spans = allSpans;
-          return this._spans;
-        }
+      if (
+        !nextId ||
+        (typeof this._limit === 'number' && allSpans.length >= this._limit)
+      ) {
+        this._spans = allSpans;
+        return this._spans;
+      }
 
-        return this._recursiveFetchSpan(nextId, allSpans);
-      });
+      return this._recursiveFetchSpan(nextId, allSpans);
+    });
   }
 
   // Get time-based stats about query results in milliseconds
-  stats () {
-    return this.spans()
-      .then(() => {
-        const deltas = this._spans.filter(
-          s => s.start && s.end
-        ).map(s => s.end - s.start);
+  stats() {
+    return this.spans().then(() => {
+      const deltas = this._spans
+        .filter(s => s.start && s.end)
+        .map(s => s.end - s.start);
 
-        // Don't divide by zero
-        if (!deltas.length) return {};
+      // Don't divide by zero
+      if (!deltas.length) return {};
 
-        return {
-          count: this._spans.length,
-          mean: sum(deltas) / deltas.length,
-          min: Math.min.apply(Math, deltas),
-          max: Math.max.apply(Math, deltas),
-          median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
-        };
-      });
+      return {
+        count: this._spans.length,
+        mean: sum(deltas) / deltas.length,
+        min: Math.min.apply(Math, deltas),
+        max: Math.max.apply(Math, deltas),
+        median: deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
+      };
+    });
   }
 
-  _slice (cursorId, start, end, maxRetries = 3) {
-    let cursor = `${cursorId.split('+')[0]}+${start.toISOString()}+${end.toISOString()}`;
+  _slice(cursorId, start, end, maxRetries = 3) {
+    let cursor = `${
+      cursorId.split('+')[0]
+    }+${start.toISOString()}+${end.toISOString()}`;
     return this._recursiveSlice(cursor, start, end, maxRetries);
   }
 
-  _recursiveSlice (cursor, start, end, maxRetries, streams = {}) {
+  _recursiveSlice(cursor, start, end, maxRetries, streams = {}) {
     return this._fetchEvents(cursor, maxRetries).then(response => {
       const nextCursor = response.cursor;
       const data = response.results;
@@ -112,17 +121,21 @@ class Query {
       });
 
       if (nextCursor) {
-        return this._recursiveSlice(nextCursor, start, end, maxRetries, streams);
+        return this._recursiveSlice(
+          nextCursor,
+          start,
+          end,
+          maxRetries,
+          streams
+        );
       } else {
         return { start, end, streams: Object.values(streams) };
       }
     });
   }
 
-  _fetchEvents (cursor, maxRetries, retries = 0) {
-    return this._client.fetch(
-      `/query/${cursor}/events`
-    ).then(res => {
+  _fetchEvents(cursor, maxRetries, retries = 0) {
+    return this._client.fetch(`/query/${cursor}/events`).then(res => {
       if (res.ok) {
         return res.json().then(results => {
           return {
@@ -140,7 +153,7 @@ class Query {
 }
 
 class Span {
-  constructor (client, { cursor, start, end }) {
+  constructor(client, { cursor, start, end }) {
     this._client = client;
     this.cursor = cursor;
     this.start = start;
@@ -148,11 +161,9 @@ class Span {
   }
 
   // TODO: this probably needs to chase `nextCursor`
-  events (maxRetries = 3, retries = 0) {
+  events(maxRetries = 3, retries = 0) {
     const cursor = this.cursor;
-    return this._client.fetch(
-      `/query/${cursor}/events`
-    ).then(res => {
+    return this._client.fetch(`/query/${cursor}/events`).then(res => {
       if (res.ok) {
         return res.json().then(results => {
           return {
@@ -170,84 +181,95 @@ class Span {
 }
 
 class Client {
-  constructor (config) {
+  constructor(config) {
     this.auth_key = config.auth_key;
     this.host = config.host || 'https://api.sentenai.com';
 
-    this._fetch = typeof window === 'object' && typeof window.fetch === 'function'
-      ? window.fetch.bind(window)
-      : require('isomorphic-fetch');
+    this._fetch =
+      typeof window === 'object' && typeof window.fetch === 'function'
+        ? window.fetch.bind(window)
+        : require('isomorphic-fetch');
   }
 
-  fetch (url, options = {}) {
-    return this._fetch(`${this.host}${url}`, Object.assign({}, options, {
-      headers: Object.assign({}, this.getHeaders(), options.headers)
-    }));
+  fetch(url, options = {}) {
+    return this._fetch(
+      `${this.host}${url}`,
+      Object.assign({}, options, {
+        headers: Object.assign({}, this.getHeaders(), options.headers)
+      })
+    );
   }
 
-  getHeaders () {
+  getHeaders() {
     return {
       'auth-key': this.auth_key,
       'Content-Type': 'application/json'
     };
   }
 
-  query (query, limit) {
-    let options = typeof query === 'string' ? {
-      body: query,
-      headers: { 'Content-Type': 'text/neoflare' }
-    } : {
-      body: ast(query)
-    };
+  query(query, limit) {
+    let options =
+      typeof query === 'string'
+        ? {
+            body: query,
+            headers: { 'Content-Type': 'text/neoflare' }
+          }
+        : {
+            body: ast(query)
+          };
 
-    return this.fetch('/query', Object.assign({
-      method: 'POST'
-    }, options)).then(res => {
+    return this.fetch(
+      '/query',
+      Object.assign(
+        {
+          method: 'POST'
+        },
+        options
+      )
+    ).then(res => {
       if (res.status === 201) {
         return new Query(this, query, res.headers.get('location'), limit);
       } else {
-        return res.json().then(body => { throw new SentenaiException(body.message); });
+        return res.json().then(body => {
+          throw new SentenaiException(body.message);
+        });
       }
     });
   }
 
-  streams (name = '', meta = {}) {
+  streams(name = '', meta = {}) {
     return this.fetch('/streams')
       .then(res => res.json())
       .then(streamList => {
         name = name.toLowerCase();
 
-        return streamList.filter(s => {
-          let match = true;
-          if (name) {
-            match = s.name.toLowerCase().includes(name);
-          }
-          Object.keys(meta).forEach(key => {
-            match = match && s.meta[key] === meta[key];
-          });
-          return match;
-        // TODO: this is weird because `stream` just returns another function.
-        // doesn't print well, doesn't inform user of what's going on
-        }).map(s => stream(s));
+        return streamList
+          .filter(s => {
+            let match = true;
+            if (name) {
+              match = s.name.toLowerCase().includes(name);
+            }
+            Object.keys(meta).forEach(key => {
+              match = match && s.meta[key] === meta[key];
+            });
+            return match;
+            // TODO: this is weird because `stream` just returns another function.
+            // doesn't print well, doesn't inform user of what's going on
+          })
+          .map(s => stream(s));
       });
   }
 
-  fields (stream) {
-    return this.fetch(
-      `/streams/${stream()}/fields`
-    ).then(res => res.json());
+  fields(stream) {
+    return this.fetch(`/streams/${stream()}/fields`).then(res => res.json());
   }
 
-  values (stream) {
-    return this.fetch(
-      `/streams/${stream()}/values`
-    ).then(res => res.json());
+  values(stream) {
+    return this.fetch(`/streams/${stream()}/values`).then(res => res.json());
   }
 
-  newest (stream) {
-    return this.fetch(
-      `/streams/${stream()}/newest`
-    ).then(res =>
+  newest(stream) {
+    return this.fetch(`/streams/${stream()}/newest`).then(res =>
       res.json().then(event => {
         return {
           event,
@@ -258,10 +280,8 @@ class Client {
     );
   }
 
-  oldest (stream) {
-    return this.fetch(
-      `/streams/${stream()}/oldest`
-    ).then(res =>
+  oldest(stream) {
+    return this.fetch(`/streams/${stream()}/oldest`).then(res =>
       res.json().then(event => {
         return {
           event,
@@ -272,7 +292,7 @@ class Client {
     );
   }
 
-  get (stream, eid) {
+  get(stream, eid) {
     const base = `/streams/${stream()}`;
     const url = eid ? `${base}/events/${eid}` : base;
 
@@ -292,7 +312,7 @@ class Client {
     });
   }
 
-  put (stream, event, opts = {}) {
+  put(stream, event, opts = {}) {
     const { id, timestamp } = opts;
 
     const headers = this.getHeaders();
@@ -324,22 +344,28 @@ class Client {
     }
   }
 
-  stats (stream, field, opts = {}) {
+  stats(stream, field, opts = {}) {
     const { start, end } = opts;
     const base = `/streams/${stream()}/fields/${field}/stats`;
 
     const params = {};
-    if (start) { params.start = start.toISOString(); }
-    if (end) { params.end = end.toISOString(); }
+    if (start) {
+      params.start = start.toISOString();
+    }
+    if (end) {
+      params.end = end.toISOString();
+    }
 
-    const url = Object.keys(params).length ? `${base}?${queryString(params)}` : base;
+    const url = Object.keys(params).length
+      ? `${base}?${queryString(params)}`
+      : base;
     return this.fetch(url).then(res => {
       handleStatusCode(res);
       return res.json();
     });
   }
 
-  delete (stream, eid) {
+  delete(stream, eid) {
     const url = `/streams/${stream()}/events/${eid}`;
     return this.fetch(url, {
       method: 'delete'
@@ -348,7 +374,7 @@ class Client {
     });
   }
 
-  destroy (stream) {
+  destroy(stream) {
     const url = `/streams/${stream()}`;
     return this.fetch(url, {
       method: 'delete',
@@ -360,27 +386,33 @@ class Client {
     });
   }
 
-  range (stream, start, end) {
+  range(stream, start, end) {
     const esc = encodeURIComponent;
-    const url = `/streams/${stream()}/start/${esc(start.toISOString())}/end/${esc(end.toISOString())}`;
-    return this.fetch(url).then(res => {
-      handleStatusCode(res);
-      return res.text();
-    }).then(text =>
-      JSON.parse(text).map(item => Object.assign({}, item, {
-        ts: new Date(item.ts)
-      }))
-    );
+    const url = `/streams/${stream()}/start/${esc(
+      start.toISOString()
+    )}/end/${esc(end.toISOString())}`;
+    return this.fetch(url)
+      .then(res => {
+        handleStatusCode(res);
+        return res.text();
+      })
+      .then(text =>
+        JSON.parse(text).map(item =>
+          Object.assign({}, item, {
+            ts: new Date(item.ts)
+          })
+        )
+      );
   }
 }
 
-function queryString (params) {
+function queryString(params) {
   return Object.keys(params)
     .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
     .join('&');
 }
 
-function handleStatusCode (res) {
+function handleStatusCode(res) {
   const code = res.status;
 
   if (code === 401) {
