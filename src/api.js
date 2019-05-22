@@ -1,10 +1,9 @@
-import { ast, stream, FlareException } from './flare';
+import { ast, Stream, FlareException } from './flare';
 
 // https://stackoverflow.com/a/27093173
 const minDate = new Date(1, 0, 1, 0, 0, 0);
 const maxDate = new Date(9990, 11, 31, 23, 59, 59);
 
-// TODO: improve custom exceptions
 class SentenaiException extends Error {}
 class AuthenticationError extends Error {}
 class APIError extends Error {}
@@ -253,23 +252,38 @@ class Client {
               match = match && s.meta[key] === meta[key];
             });
             return match;
-            // TODO: this is weird because `stream` just returns another function.
-            // doesn't print well, doesn't inform user of what's going on
           })
-          .map(s => stream(s));
+          .map(s => new Stream(this, s.name));
       });
   }
 
   fields(stream) {
-    return this.fetch(`/streams/${stream()}/fields`).then(res => res.json());
+    return this.fetch(`/streams/${stream.name}/fields`)
+      .then(res => res.json())
+      .then(fields => {
+        return fields.map(f => ({
+          id: f.id,
+          path: f.path,
+          start: new Date(f.start)
+        }));
+      });
   }
 
   values(stream) {
-    return this.fetch(`/streams/${stream()}/values`).then(res => res.json());
+    return this.fetch(`/streams/${stream.name}/values`)
+      .then(res => res.json())
+      .then(values => {
+        return values.map(v => ({
+          id: v.id,
+          path: v.path,
+          value: v.value,
+          ts: new Date(v.ts)
+        }));
+      });
   }
 
   newest(stream) {
-    return this.fetch(`/streams/${stream()}/newest`).then(res =>
+    return this.fetch(`/streams/${stream.name}/newest`).then(res =>
       res.json().then(event => {
         return {
           event,
@@ -281,7 +295,7 @@ class Client {
   }
 
   oldest(stream) {
-    return this.fetch(`/streams/${stream()}/oldest`).then(res =>
+    return this.fetch(`/streams/${stream.name}/oldest`).then(res =>
       res.json().then(event => {
         return {
           event,
@@ -293,7 +307,7 @@ class Client {
   }
 
   get(stream, eid) {
-    const base = `/streams/${stream()}`;
+    const base = `/streams/${stream.name}`;
     const url = eid ? `${base}/events/${eid}` : base;
 
     return this.fetch(url).then(res => {
@@ -316,7 +330,7 @@ class Client {
     const { id, timestamp } = opts;
 
     const headers = this.getHeaders();
-    const base = `/streams/${stream()}/events`;
+    const base = `/streams/${stream.name}/events`;
     const url = id ? `${base}/${id}` : base;
 
     if (timestamp) {
@@ -346,7 +360,7 @@ class Client {
 
   stats(stream, field, opts = {}) {
     const { start, end } = opts;
-    const base = `/streams/${stream()}/fields/${field}/stats`;
+    const base = `/streams/${stream.name}/fields/${field}/stats`;
 
     const params = {};
     if (start) {
@@ -366,7 +380,7 @@ class Client {
   }
 
   delete(stream, eid) {
-    const url = `/streams/${stream()}/events/${eid}`;
+    const url = `/streams/${stream.name}/events/${eid}`;
     return this.fetch(url, {
       method: 'delete'
     }).then(res => {
@@ -375,7 +389,7 @@ class Client {
   }
 
   destroy(stream) {
-    const url = `/streams/${stream()}`;
+    const url = `/streams/${stream.name}`;
     return this.fetch(url, {
       method: 'delete',
       headers: {
@@ -388,7 +402,7 @@ class Client {
 
   range(stream, start, end) {
     const esc = encodeURIComponent;
-    const url = `/streams/${stream()}/start/${esc(
+    const url = `/streams/${stream.name}/start/${esc(
       start.toISOString()
     )}/end/${esc(end.toISOString())}`;
     return this.fetch(url)
@@ -403,6 +417,10 @@ class Client {
           })
         )
       );
+  }
+
+  stream(name, filters) {
+    return new Stream(this, name, filters);
   }
 }
 

@@ -72,11 +72,53 @@ class Delta {
   }
 }
 
-class Stream {
-  constructor(name, _filter) {
+export class Stream {
+  constructor(client, name, filter) {
     this.name = name;
+    this._client = client;
     this._filter =
-      _filter && _filter.constructor === Object ? new Filter(_filter) : _filter;
+      filter && filter.constructor === Object ? new Filter(filter) : filter;
+  }
+
+  when(moment) {
+    if (moment instanceof Switch) {
+      return new BoundSwitch(
+        new Stream(this._client, this.name, this._filter),
+        moment
+      );
+    } else {
+      return makeSpans(
+        new Stream(this._client, this.name, this._filter),
+        moment,
+        ['event']
+      );
+    }
+  }
+
+  fields() {
+    return this._client.fields(this);
+  }
+
+  values() {
+    return this._client.values(this);
+  }
+
+  newest() {
+    return this._client.newest(this);
+  }
+
+  oldest() {
+    return this._client.oldest(this);
+  }
+
+  // TODO: get, put
+
+  stats(field, opts) {
+    return this._client.stats(this, field, opts);
+  }
+
+  range(start, end) {
+    return this._client.stats(this, start, end);
   }
 
   get ast() {
@@ -410,28 +452,6 @@ export function select(options) {
         options.start,
         options.end
       );
-    }
-  };
-}
-
-export function stream(name, filters) {
-  if (typeof name === 'object') {
-    name = name.name;
-  } else if (typeof name !== 'string') {
-    throw new FlareException('bad stream arguments');
-  }
-  return function() {
-    if (arguments.length < 1) {
-      // TODO: this might be mixing responsibilities too much
-      return name;
-    } else if (arguments.length === 1) {
-      if (arguments[0] instanceof Switch) {
-        return new BoundSwitch(new Stream(name, filters), arguments[0]);
-      } else {
-        return makeSpans(new Stream(name, filters), arguments[0], ['event']);
-      }
-    } else {
-      throw FlareException('Too many arguments provided to stream');
     }
   };
 }

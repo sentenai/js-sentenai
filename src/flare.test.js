@@ -1,6 +1,6 @@
 /* global test, expect */
 const {
-  stream,
+  Stream,
   select,
   ast,
   lt,
@@ -16,11 +16,15 @@ const {
   during
 } = require('../index.js').default.flare;
 
+function stream(name, filters) {
+  return new Stream(null, name, filters);
+}
+
 const expectAST = a => expect(JSON.parse(ast(a)));
 
 test('select span', () => {
   const s = stream('S');
-  expectAST(select()(s({ x: true }))).toEqual({
+  expectAST(select()(s.when({ x: true }))).toEqual({
     select: {
       type: 'span',
       op: '==',
@@ -36,9 +40,9 @@ test('any comparisons', () => {
 
   expectAST(
     any(
-      moose({ x: lt(0) }),
-      moose({ x: gte(3.141592653589793) }),
-      moose({ b: ne(false) })
+      moose.when({ x: lt(0) }),
+      moose.when({ x: gte(3.141592653589793) }),
+      moose.when({ b: ne(false) })
     )
   ).toEqual({
     type: 'any',
@@ -72,13 +76,14 @@ test('stream access', () => {
   const s = stream('S');
   expectAST(
     select()(
-      s({ even: true })
-        .then(s({ event: true }))
-        .then(s({ event: { event: true } }))
-        .then(s({ id: true }))
-        .then(s({ '.id': true }))
-        .then(s({ '.id': { '': true } }))
-        .then(s({ true: { 真实: true } }))
+      s
+        .when({ even: true })
+        .then(s.when({ event: true }))
+        .then(s.when({ event: { event: true } }))
+        .then(s.when({ id: true }))
+        .then(s.when({ '.id': true }))
+        .then(s.when({ '.id': { '': true } }))
+        .then(s.when({ true: { 真实: true } }))
     )
   ).toEqual({
     select: {
@@ -147,9 +152,9 @@ test('all and any in serial', () => {
 
   expectAST(
     select()(
-      any(foo({ x: true }), bar({ y: true }))
-        .then(baz({ z: true }))
-        .then(all(qux({ α: true }), quux({ β: true })))
+      any(foo.when({ x: true }), bar.when({ y: true }))
+        .then(baz.when({ z: true }))
+        .then(all(qux.when({ α: true }), quux.when({ β: true })))
     )
   ).toEqual({
     select: {
@@ -209,7 +214,7 @@ test('or', () => {
   const s = stream('s');
   const t = stream('t');
 
-  expectAST(select()(or(s({ x: true }), t({ x: true })))).toEqual({
+  expectAST(select()(or(s.when({ x: true }), t.when({ x: true })))).toEqual({
     select: {
       expr: '||',
       args: [
@@ -239,8 +244,9 @@ test('relative span', () => {
   expectAST(
     select()(
       or(
-        s({ x: true }).min({ years: 1, months: 1 }),
-        t({ x: true })
+        s.when({ x: true }).min({ years: 1, months: 1 }),
+        t
+          .when({ x: true })
           .after({ minutes: 11 })
           .within({ seconds: 13 })
       ).max({ weeks: 1 })
@@ -277,9 +283,10 @@ test('nested relative spans', () => {
 
   expectAST(
     select()(
-      s({ x: lt(0) }).then(
-        s({ x: 0 })
-          .then(s({ x: gt(0) }).within({ seconds: 1 }))
+      s.when({ x: lt(0) }).then(
+        s
+          .when({ x: 0 })
+          .then(s.when({ x: gt(0) }).within({ seconds: 1 }))
           .within({ seconds: 2 })
       )
     )
@@ -323,33 +330,35 @@ test('nested relative spans', () => {
 test('switches', () => {
   const s = stream('S');
 
-  expectAST(select()(s(event({ x: lt(0.1) }).then({ x: gt(0) })))).toEqual({
-    select: {
-      type: 'switch',
-      stream: { name: 'S' },
-      conds: [
-        {
-          op: '<',
-          arg: { type: 'double', val: 0.1 },
-          type: 'span',
-          path: ['event', 'x']
-        },
-        {
-          op: '>',
-          arg: { type: 'double', val: 0 },
-          type: 'span',
-          path: ['event', 'x']
-        }
-      ]
+  expectAST(select()(s.when(event({ x: lt(0.1) }).then({ x: gt(0) })))).toEqual(
+    {
+      select: {
+        type: 'switch',
+        stream: { name: 'S' },
+        conds: [
+          {
+            op: '<',
+            arg: { type: 'double', val: 0.1 },
+            type: 'span',
+            path: ['event', 'x']
+          },
+          {
+            op: '>',
+            arg: { type: 'double', val: 0 },
+            type: 'span',
+            path: ['event', 'x']
+          }
+        ]
+      }
     }
-  });
+  );
 });
 
 test('stream filters', () => {
   const s = stream('S', { season: 'summer' });
 
   expectAST(
-    select()(and(s({ temperature: gte(77.5) }), s({ sunny: true })))
+    select()(and(s.when({ temperature: gte(77.5) }), s.when({ sunny: true })))
   ).toEqual({
     select: {
       expr: '&&',
@@ -393,7 +402,7 @@ test('or stream filters', () => {
     or(filter({ season: 'summer' }), filter({ season: 'winter' }))
   );
 
-  expectAST(select()(s({ sunny: true }))).toEqual({
+  expectAST(select()(s.when({ sunny: true }))).toEqual({
     select: {
       type: 'span',
       op: '==',
@@ -425,15 +434,15 @@ test('multiple conditions is shorthand for &&', () => {
   const s = stream('S');
   const t = stream('T');
 
-  expectAST(select()(s({ sunny: true }), t({ happy: true }))).toEqual(
-    select()(and(s({ sunny: true }), t({ happy: true }))).ast
+  expectAST(select()(s.when({ sunny: true }), t.when({ happy: true }))).toEqual(
+    select()(and(s.when({ sunny: true }), t.when({ happy: true }))).ast
   );
 });
 
 test('specifying start and end', () => {
   const s = stream('S');
 
-  const cond = s({ sunny: true });
+  const cond = s.when({ sunny: true });
   const base = cond.ast;
 
   const start = '2017-06-01T00:00:00+00:00';
@@ -458,7 +467,9 @@ test('specifying start and end', () => {
 test('during', () => {
   const s = stream('S');
 
-  expectAST(select()(during(s({ foo: 'bar' }), s({ baz: gt(1.5) })))).toEqual({
+  expectAST(
+    select()(during(s.when({ foo: 'bar' }), s.when({ baz: gt(1.5) })))
+  ).toEqual({
     select: {
       type: 'during',
       conds: [
