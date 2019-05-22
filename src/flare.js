@@ -1,6 +1,6 @@
 export function FlareException() {}
 
-function makeSpans(stream, conds, path) {
+export function makeSpans(stream, conds, path) {
   if (typeof path === 'undefined') {
     path = [];
   }
@@ -72,65 +72,7 @@ class Delta {
   }
 }
 
-export class Stream {
-  constructor(client, name, filter) {
-    this.name = name;
-    this._client = client;
-    this._filter =
-      filter && filter.constructor === Object ? new Filter(filter) : filter;
-  }
-
-  when(moment) {
-    if (moment instanceof Switch) {
-      return new BoundSwitch(
-        new Stream(this._client, this.name, this._filter),
-        moment
-      );
-    } else {
-      return makeSpans(
-        new Stream(this._client, this.name, this._filter),
-        moment,
-        ['event']
-      );
-    }
-  }
-
-  fields() {
-    return this._client.fields(this);
-  }
-
-  values() {
-    return this._client.values(this);
-  }
-
-  newest() {
-    return this._client.newest(this);
-  }
-
-  oldest() {
-    return this._client.oldest(this);
-  }
-
-  // TODO: get, put
-
-  stats(field, opts) {
-    return this._client.stats(this, field, opts);
-  }
-
-  range(start, end) {
-    return this._client.stats(this, start, end);
-  }
-
-  get ast() {
-    const ast = { name: this.name };
-    if (this._filter) {
-      ast.filter = this._filter.ast;
-    }
-    return ast;
-  }
-}
-
-class Filter {
+export class Filter {
   constructor(map) {
     this._map = map;
   }
@@ -398,7 +340,7 @@ class Cmp {
   }
 }
 
-class Switch {
+export class Switch {
   constructor(conds) {
     if (Array.isArray(conds)) {
       this.conds = conds;
@@ -418,7 +360,7 @@ class Switch {
   }
 }
 
-class BoundSwitch {
+export class BoundSwitch {
   constructor(stream, sw) {
     this.stream = stream;
     this.switch = sw;

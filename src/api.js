@@ -1,4 +1,11 @@
-import { ast, Stream, FlareException } from './flare';
+import {
+  ast,
+  FlareException,
+  Switch,
+  BoundSwitch,
+  makeSpans,
+  Filter
+} from './flare';
 
 // https://stackoverflow.com/a/27093173
 const minDate = new Date(1, 0, 1, 0, 0, 0);
@@ -421,6 +428,84 @@ class Client {
 
   stream(name, filters) {
     return new Stream(this, name, filters);
+  }
+}
+
+export class Stream {
+  constructor(client, name, filter) {
+    this.name = name;
+    this._client = client;
+    this._filter =
+      filter && filter.constructor === Object ? new Filter(filter) : filter;
+  }
+
+  when(moment) {
+    if (moment instanceof Switch) {
+      return new BoundSwitch(
+        new Stream(this._client, this.name, this._filter),
+        moment
+      );
+    } else {
+      return makeSpans(
+        new Stream(this._client, this.name, this._filter),
+        moment,
+        ['event']
+      );
+    }
+  }
+
+  fields() {
+    return this._client
+      .fields(this)
+      .then(fields => fields.map(f => new Field(this, f)));
+  }
+
+  values() {
+    return this._client.values(this);
+  }
+
+  newest() {
+    return this._client.newest(this);
+  }
+
+  oldest() {
+    return this._client.oldest(this);
+  }
+
+  // TODO: get, put
+
+  stats(field, opts) {
+    return this._client.stats(this, field, opts);
+  }
+
+  range(start, end) {
+    return this._client.stats(this, start, end);
+  }
+
+  get ast() {
+    const ast = { name: this.name };
+    if (this._filter) {
+      ast.filter = this._filter.ast;
+    }
+    return ast;
+  }
+}
+
+class Field {
+  constructor(stream, { id, path, start }) {
+    this.stream = stream;
+    this.id = id;
+    this.path = path;
+    this.start = start;
+  }
+
+  stats() {
+    return this.stream.stats('event.' + this.toString());
+  }
+
+  toString() {
+    // TODO: corona#659
+    return this.path.join('.');
   }
 }
 

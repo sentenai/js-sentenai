@@ -1,6 +1,4 @@
-/* global test, expect */
 const {
-  Stream,
   select,
   ast,
   lt,
@@ -15,6 +13,7 @@ const {
   filter,
   during
 } = require('../index.js').default.flare;
+const { Stream } = require('../src/api.js');
 
 function stream(name, filters) {
   return new Stream(null, name, filters);
