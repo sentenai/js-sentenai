@@ -6,6 +6,7 @@ import {
   makeSpans,
   Filter
 } from './flare';
+import btoa from 'btoa';
 
 // https://stackoverflow.com/a/27093173
 const minDate = new Date(1, 0, 1, 0, 0, 0);
@@ -167,22 +168,30 @@ class Span {
   }
 
   // TODO: this probably needs to chase `nextCursor`
-  events(maxRetries = 3, retries = 0) {
+  events(projections, maxRetries = 3, retries = 0) {
     const cursor = this.cursor;
-    return this._client.fetch(`/query/${cursor}/events`).then(res => {
-      if (res.ok) {
-        return res.json().then(results => {
-          return {
-            results,
-            cursor: res.headers.get('cursor') || null
-          };
-        });
-      } else if (retries < maxRetries) {
-        return this.events(cursor, maxRetries, retries + 1);
-      } else {
-        throw new SentenaiException('Failed to get cursor');
-      }
-    });
+    const params = {};
+
+    if (projections) {
+      params.projections = btoa(JSON.stringify(projections));
+    }
+
+    return this._client
+      .fetch(`/query/${cursor}/events?${queryString(params)}`)
+      .then(res => {
+        if (res.ok) {
+          return res.json().then(results => {
+            return {
+              results,
+              cursor: res.headers.get('cursor') || null
+            };
+          });
+        } else if (retries < maxRetries) {
+          return this.events(projections, maxRetries, retries + 1);
+        } else {
+          throw new SentenaiException('Failed to get cursor');
+        }
+      });
   }
 }
 
