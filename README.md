@@ -12,15 +12,13 @@ $ npm install --save sentenai
 
 ```js
 const { Client, flare } = require('sentenai');
-const { stream, select, gt } = flare;
+const { select, gt } = flare;
 const sentenai = new Client({ auth_key: '' });
 
-const myStream = stream('my-stream-id');
-const json = await sentenai.query(
-  select()(
-    myStream({ temp: gt(82.3) })
-  )
-).then(data => data.json());
+const myStream = sentenai.stream('my-stream-id');
+const json = await sentenai
+  .query(select()(myStream({ temp: gt(82.3) })))
+  .then(cursor => cursor.spans());
 ```
 
 View [our docs](http://docs.sentenai.com/) to learn more.
@@ -35,6 +33,7 @@ $ npm test
 ```
 
 To automatically run `jest` as you update code:
+
 ```
 $ npx jest --watch
 ```
