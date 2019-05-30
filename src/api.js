@@ -51,7 +51,7 @@ class Query {
     const base = `/query/${id}/spans`;
     const url =
       typeof limit === 'number' ? `${base}?${queryString({ limit })}` : base;
-    return this._client.fetch(url).then(res => res.json());
+    return this._client.fetch(url).then(getJSON);
   }
 
   _recursiveFetchSpan(id, allSpans = []) {
@@ -144,7 +144,7 @@ class Query {
   _fetchEvents(cursor, maxRetries, retries = 0) {
     return this._client.fetch(`/query/${cursor}/events`).then(res => {
       if (res.ok) {
-        return res.json().then(results => {
+        return getJSON(res).then(results => {
           return {
             results,
             cursor: res.headers.get('cursor') || null
@@ -180,7 +180,7 @@ class Span {
       .fetch(`/query/${cursor}/events?${queryString(params)}`)
       .then(res => {
         if (res.ok) {
-          return res.json().then(results => {
+          return getJSON(res).then(results => {
             return {
               results,
               cursor: res.headers.get('cursor') || null
@@ -245,7 +245,7 @@ class Client {
       if (res.status === 201) {
         return new Query(this, query, res.headers.get('location'), limit);
       } else {
-        return res.json().then(body => {
+        return getJSON(res).then(body => {
           throw new SentenaiException(body.message);
         });
       }
@@ -254,7 +254,7 @@ class Client {
 
   streams(name = '', meta = {}) {
     return this.fetch('/streams')
-      .then(res => res.json())
+      .then(getJSON)
       .then(streamList => {
         name = name.toLowerCase();
 
@@ -275,7 +275,7 @@ class Client {
 
   fields(stream) {
     return this.fetch(`/streams/${stream.name}/fields`)
-      .then(res => res.json())
+      .then(getJSON)
       .then(fields => {
         return fields.map(f => ({
           id: f.id,
@@ -287,7 +287,7 @@ class Client {
 
   values(stream) {
     return this.fetch(`/streams/${stream.name}/values`)
-      .then(res => res.json())
+      .then(getJSON)
       .then(values => {
         return values.map(v => ({
           id: v.id,
@@ -300,7 +300,7 @@ class Client {
 
   newest(stream) {
     return this.fetch(`/streams/${stream.name}/newest`).then(res =>
-      res.json().then(event => {
+      getJSON(res).then(event => {
         return {
           event,
           ts: new Date(res.headers.get('Timestamp')),
@@ -312,7 +312,7 @@ class Client {
 
   oldest(stream) {
     return this.fetch(`/streams/${stream.name}/oldest`).then(res =>
-      res.json().then(event => {
+      getJSON(res).then(event => {
         return {
           event,
           ts: new Date(res.headers.get('Timestamp')),
@@ -327,9 +327,8 @@ class Client {
     const url = eid ? `${base}/events/${eid}` : base;
 
     return this.fetch(url).then(res => {
-      handleStatusCode(res);
       if (eid) {
-        return res.json().then(event => {
+        return getJSON(res).then(event => {
           return {
             event,
             id: res.headers.get('location'),
@@ -337,7 +336,7 @@ class Client {
           };
         });
       } else {
-        return res.json();
+        return getJSON(res);
       }
     });
   }
@@ -389,10 +388,7 @@ class Client {
     const url = Object.keys(params).length
       ? `${base}?${queryString(params)}`
       : base;
-    return this.fetch(url).then(res => {
-      handleStatusCode(res);
-      return res.json();
-    });
+    return this.fetch(url).then(getJSON);
   }
 
   delete(stream, eid) {
@@ -538,6 +534,11 @@ function handleStatusCode(res) {
   } else if (code >= 400) {
     throw new APIError(res);
   }
+}
+
+function getJSON(res) {
+  handleStatusCode(res);
+  return res.json();
 }
 
 export default Client;
