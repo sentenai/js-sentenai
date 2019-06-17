@@ -249,10 +249,12 @@ class Client {
     ).then(res => {
       if (res.status === 201) {
         return new Query(this, query, res.headers.get('location'), limit);
-      } else {
-        return getJSON(res).then(body => {
+      } else if (res.status === 400) {
+        return res.json().then(body => {
           throw new SentenaiException(body.message);
         });
+      } else {
+        return getJSON(res);
       }
     });
   }

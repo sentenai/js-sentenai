@@ -1,4 +1,4 @@
-export function FlareException() {}
+export class FlareException extends Error {}
 
 export function makeSpans(stream, conds, path) {
   if (typeof path === 'undefined') {
