@@ -27,6 +27,12 @@ class Query {
     this._limit = limit;
   }
 
+  getBody() {
+    return typeof this._query === 'string'
+      ? this._query
+      : JSON.stringify(this._query);
+  }
+
   json() {
     return this.spans()
       .then(spans =>
