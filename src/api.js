@@ -19,7 +19,6 @@ class NotFound extends Error {}
 const sum = list => list.reduce((total, num) => total + num, 0);
 
 class Query {
-  // TODO: add `returning` a.k.a. projections
   constructor(client, query, queryId, limit) {
     this._client = client;
     this._query = query;
