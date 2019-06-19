@@ -1,6 +1,6 @@
 {
   "name": "sentenai",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "JavaScript client for Sentenai",
   "main": "build/index.js",
   "scripts": {
