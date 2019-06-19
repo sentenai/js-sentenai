@@ -200,6 +200,43 @@ class Span {
   }
 }
 
+class View {
+  constructor(client, id, name, description) {
+    this._client = client;
+    this.id = id;
+    this.name = name;
+    this.description = description;
+  }
+
+  data(opts = {}) {
+    const { start, end, limit, sort } = opts;
+    const params = {};
+    if (start) {
+      params.start = start.toISOString();
+    }
+    if (end) {
+      params.end = end.toISOString();
+    }
+    if (limit) {
+      params.limit = limit;
+    }
+    if (sort) {
+      params.sort = sort;
+    }
+    return this._client
+      .fetch(`/views/${this.id}/data?${queryString(params)}`)
+      .then(getJSON)
+      .then(({ streams, events }) => {
+        // ignoring `streams` for now
+        return events.map(e =>
+          Object.assign({}, e, {
+            ts: new Date(e.ts)
+          })
+        );
+      });
+  }
+}
+
 class Client {
   constructor(config) {
     this.auth_key = config.auth_key;
@@ -256,6 +293,20 @@ class Client {
       } else {
         return getJSON(res);
       }
+    });
+  }
+
+  view(view, name = '', description = '') {
+    const url = name ? `/views/${encodeURIComponent(name)}` : '/views';
+    // TODO: remove `description: ''` once API removes it
+    const body = name ? { description, view } : { view, description: '' };
+    return this.fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    }).then(res => {
+      handleStatusCode(res);
+      const viewId = res.headers.get('Location');
+      return new View(this, viewId, name, description);
     });
   }
 
