@@ -178,7 +178,7 @@ class Span {
     const params = {};
 
     if (projections) {
-      params.projections = btoa(JSON.stringify(projections));
+      params.projections = base64(projections);
     }
 
     return this._client
@@ -332,7 +332,8 @@ class Client {
   }
 
   fields(stream) {
-    return this.fetch(`/streams/${stream.name}/fields`)
+    const query = stream.filter ? '?filters=' + base64(stream.filter.ast) : '';
+    return this.fetch(`/streams/${stream.name}/fields${query}`)
       .then(getJSON)
       .then(fields => {
         return fields.map(f => ({
@@ -344,7 +345,8 @@ class Client {
   }
 
   values(stream) {
-    return this.fetch(`/streams/${stream.name}/values`)
+    const query = stream.filter ? '?filters=' + base64(stream.filter.ast) : '';
+    return this.fetch(`/streams/${stream.name}/values${query}`)
       .then(getJSON)
       .then(values => {
         return values.map(v => ({
@@ -442,6 +444,9 @@ class Client {
     if (end) {
       params.end = end.toISOString();
     }
+    if (stream.filter) {
+      params.filters = base64(stream.filter.ast);
+    }
 
     const url = Object.keys(params).length
       ? `${base}?${queryString(params)}`
@@ -453,9 +458,7 @@ class Client {
     const url = `/streams/${stream.name}/events/${eid}`;
     return this.fetch(url, {
       method: 'delete'
-    }).then(res => {
-      handleStatusCode(res);
-    });
+    }).then(handleStatusCode);
   }
 
   destroy(stream) {
@@ -465,9 +468,7 @@ class Client {
       headers: {
         'auth-key': this.auth_key
       }
-    }).then(res => {
-      handleStatusCode(res);
-    });
+    }).then(handleStatusCode);
   }
 
   range(stream, start, end) {
@@ -498,19 +499,23 @@ export class Stream {
   constructor(client, name, filter) {
     this.name = name;
     this._client = client;
-    this._filter =
+    this.filter =
       filter && filter.constructor === Object ? new Filter(filter) : filter;
+  }
+
+  withFilter(filter) {
+    return new Stream(this._client, this.name, filter);
   }
 
   when(moment) {
     if (moment instanceof Switch) {
       return new BoundSwitch(
-        new Stream(this._client, this.name, this._filter),
+        new Stream(this._client, this.name, this.filter),
         moment
       );
     } else {
       return makeSpans(
-        new Stream(this._client, this.name, this._filter),
+        new Stream(this._client, this.name, this.filter),
         moment,
         ['event']
       );
@@ -547,8 +552,8 @@ export class Stream {
 
   get ast() {
     const ast = { name: this.name };
-    if (this._filter) {
-      ast.filter = this._filter.ast;
+    if (this.filter) {
+      ast.filter = this.filter.ast;
     }
     return ast;
   }
@@ -562,14 +567,28 @@ class Field {
     this.start = start;
   }
 
+  withFilter(filter) {
+    const stream = this.stream.withFilter(filter);
+    return stream
+      .fields()
+      .then(
+        fields =>
+          fields.filter(field => field.toString() === this.toString())[0]
+      );
+  }
+
   stats() {
-    return this.stream.stats('event.' + this.toString());
+    return this.stream.stats(this.toString());
   }
 
   toString() {
     // TODO: corona#659
     return this.path.join('.');
   }
+}
+
+function base64(obj) {
+  return btoa(JSON.stringify(obj));
 }
 
 function queryString(params) {
