@@ -237,6 +237,27 @@ class View {
   }
 }
 
+class Pattern {
+  constructor(client, id, name, description) {
+    this._client = client;
+    this.id = id;
+    this.name = name;
+    this.description = description;
+  }
+
+  spans() {
+    return this._client
+      .fetch(`/patterns/${this.id}/search`)
+      .then(getJSON)
+      .then(spans =>
+        spans.map(({ start, end }) => ({
+          start: new Date(start),
+          end: new Date(end)
+        }))
+      );
+  }
+}
+
 class Client {
   constructor(config) {
     this.auth_key = config.auth_key;
@@ -265,7 +286,7 @@ class Client {
   }
 
   query(query, limit) {
-    let options =
+    const options =
       typeof query === 'string'
         ? {
             body: query,
@@ -298,8 +319,7 @@ class Client {
 
   view(view, name = '', description = '') {
     const url = name ? `/views/${encodeURIComponent(name)}` : '/views';
-    // TODO: remove `description: ''` once API removes it
-    const body = name ? { description, view } : { view, description: '' };
+    const body = name ? { description, view } : { view };
     return this.fetch(url, {
       method: 'POST',
       body: JSON.stringify(body)
@@ -307,6 +327,20 @@ class Client {
       handleStatusCode(res);
       const viewId = res.headers.get('Location');
       return new View(this, viewId, name, description);
+    });
+  }
+
+  pattern(pattern, name = '', description = '') {
+    const url = name ? `/patterns/${encodeURIComponent(name)}` : '/patterns';
+    return this.fetch(url, {
+      body: JSON.stringify({
+        pattern: typeof pattern === 'string' ? pattern : ast(pattern)
+      }),
+      method: 'POST'
+    }).then(res => {
+      handleStatusCode(res);
+      const viewId = res.headers.get('Location');
+      return new Pattern(this, viewId, name, description);
     });
   }
 
