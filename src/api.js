@@ -338,9 +338,16 @@ class Client {
       }),
       method: 'POST'
     }).then(res => {
-      handleStatusCode(res);
-      const viewId = res.headers.get('Location');
-      return new Pattern(this, viewId, name, description);
+      if (res.status === 201) {
+        const patternId = res.headers.get('Location');
+        return new Pattern(this, patternId, name, description);
+      } else if (res.status === 400) {
+        return res.json().then(body => {
+          throw new SentenaiException(body.message);
+        });
+      } else {
+        return getJSON(res);
+      }
     });
   }
 
