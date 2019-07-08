@@ -476,7 +476,7 @@ class Client {
 
   stats(stream, field, opts = {}) {
     const { start, end } = opts;
-    const base = `/streams/${stream.name}/fields/${field}/stats`;
+    const base = `/streams/${stream.name}/stats/${field}`;
 
     const params = {};
     if (start) {
