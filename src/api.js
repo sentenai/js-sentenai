@@ -285,6 +285,10 @@ class Client {
     };
   }
 
+  ping() {
+    return this.fetch('/').then(handleStatusCode);
+  }
+
   query(query, limit) {
     const options =
       typeof query === 'string'
