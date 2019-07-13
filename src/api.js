@@ -622,8 +622,8 @@ class Field {
       );
   }
 
-  stats() {
-    return this.stream.stats(this.toString());
+  stats(opts) {
+    return this.stream.stats(this.toString(), opts);
   }
 
   toString() {
