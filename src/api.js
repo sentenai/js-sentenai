@@ -238,11 +238,14 @@ class View {
 }
 
 class Pattern {
-  constructor(client, id, name, description) {
+  constructor(client, { id, name, description, query, anonymous, created }) {
     this._client = client;
     this.id = id;
     this.name = name;
     this.description = description;
+    this.query = query;
+    this.anonymous = anonymous;
+    this.created = created;
   }
 
   spans() {
@@ -344,7 +347,14 @@ class Client {
     }).then(res => {
       if (res.status === 201) {
         const patternId = res.headers.get('Location');
-        return new Pattern(this, patternId, name, description);
+        return new Pattern(this, {
+          id: patternId,
+          name,
+          description,
+          query: pattern,
+          anonymous: !name,
+          created: res.headers.get('Date')
+        });
       } else if (res.status === 400) {
         return res.json().then(body => {
           throw new SentenaiException(body.message);
@@ -353,6 +363,23 @@ class Client {
         return getJSON(res);
       }
     });
+  }
+  patterns() {
+    return this.fetch('/patterns')
+      .then(getJSON)
+      .then(list =>
+        list.map(
+          ({ name, description, query, anonymous, created }) =>
+            new Pattern(this, {
+              id: null,
+              name,
+              description,
+              query,
+              anonymous,
+              created
+            })
+        )
+      );
   }
 
   streams(name = '', meta = {}) {
