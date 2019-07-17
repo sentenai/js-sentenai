@@ -238,9 +238,8 @@ class View {
 }
 
 class Pattern {
-  constructor(client, { id, name, description, query, anonymous, created }) {
+  constructor(client, { name, description, query, anonymous, created }) {
     this._client = client;
-    this.id = id;
     this.name = name;
     this.description = description;
     this.query = query;
@@ -250,7 +249,7 @@ class Pattern {
 
   spans() {
     return this._client
-      .fetch(`/patterns/${this.id || this.name}/search`)
+      .fetch(`/patterns/${this.name}/search`)
       .then(getJSON)
       .then(spans =>
         spans.map(({ start, end }) => ({
@@ -346,10 +345,8 @@ class Client {
       method: 'POST'
     }).then(res => {
       if (res.status === 201) {
-        const patternId = res.headers.get('Location');
         return new Pattern(this, {
-          id: patternId,
-          name,
+          name: name || res.headers.get('Location'),
           description,
           query: pattern,
           anonymous: !name,
