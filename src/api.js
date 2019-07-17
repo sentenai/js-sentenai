@@ -258,6 +258,16 @@ class Pattern {
         }))
       );
   }
+
+  saveAs(name, description = '') {
+    return this._client.pattern(this.query, name, description);
+  }
+
+  delete() {
+    return this._client
+      .fetch(`/patterns/${this.name}`, { method: 'DELETE' })
+      .then(handleStatusCode);
+  }
 }
 
 class Client {
