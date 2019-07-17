@@ -250,7 +250,7 @@ class Pattern {
 
   spans() {
     return this._client
-      .fetch(`/patterns/${this.id}/search`)
+      .fetch(`/patterns/${this.id || this.name}/search`)
       .then(getJSON)
       .then(spans =>
         spans.map(({ start, end }) => ({
@@ -369,9 +369,9 @@ class Client {
       .then(getJSON)
       .then(list =>
         list.map(
-          ({ name, description, query, anonymous, created }) =>
+          ({ id, name, description, query, anonymous, created }) =>
             new Pattern(this, {
-              id: null,
+              id,
               name,
               description,
               query,
