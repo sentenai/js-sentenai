@@ -273,7 +273,9 @@ class Pattern {
 class Client {
   constructor(config) {
     this.auth_key = config.auth_key;
-    this.host = config.host || 'https://api.sentenai.com';
+    this.host = config.host
+      ? trimTrailing('/', config.host)
+      : 'https://api.sentenai.com';
 
     this._fetch =
       typeof window === 'object' && typeof window.fetch === 'function'
@@ -696,6 +698,13 @@ function handleStatusCode(res) {
 function getJSON(res) {
   handleStatusCode(res);
   return res.json();
+}
+
+function trimTrailing(char, str) {
+  while (str[str.length - 1] === char) {
+    str = str.slice(0, str.length - 1);
+  }
+  return str;
 }
 
 export default Client;
