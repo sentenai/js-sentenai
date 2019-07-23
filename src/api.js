@@ -379,9 +379,8 @@ class Client {
       .then(getJSON)
       .then(list =>
         list.map(
-          ({ id, name, description, query, anonymous, created }) =>
+          ({ name, description, query, anonymous, created }) =>
             new Pattern(this, {
-              id,
               name,
               description,
               query,
