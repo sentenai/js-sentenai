@@ -11,13 +11,11 @@ $ npm install --save sentenai
 ## usage
 
 ```js
-const { Client, flare } = require('sentenai');
-const { select, gt } = flare;
-const sentenai = new Client({ auth_key: '' });
+const Sentenai = require('sentenai');
+const sentenai = new Sentenai.Client({ auth_key: '' });
 
-const myStream = sentenai.stream('my-stream-id');
-const json = await sentenai
-  .query(select()(myStream({ temp: gt(82.3) })))
+const spans = await sentenai
+  .pattern('my-stream-id when temp > 82.3')
   .then(cursor => cursor.spans());
 ```
 
