@@ -112,4 +112,37 @@ test('Stream#values', () => {
   });
 });
 
-// test('Field#stats', () => {});
+test('Field#stats', () => {
+  let name = 'weather';
+  let fieldName = 'humidity';
+  let client = mockClient(`/streams/${name}/stats/${fieldName}`, {
+    categorical: {},
+    numerical: {
+      count: 345,
+      max: 0.98,
+      mean: 0.647391304347826,
+      min: 0.28,
+      missing: 0,
+      std: 0.15552099400186697
+    }
+  });
+  let stream = client.stream(name);
+  let field = new Field(stream, {
+    id: '123',
+    path: ['humidity'],
+    start: new Date()
+  });
+  return field.stats().then(stats => {
+    expect(stats).toMatchObject({
+      categorical: {},
+      numerical: {
+        count: 345,
+        max: 0.98,
+        mean: 0.647391304347826,
+        min: 0.28,
+        missing: 0,
+        std: 0.15552099400186697
+      }
+    });
+  });
+});
