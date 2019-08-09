@@ -226,30 +226,6 @@ class Client {
       });
   }
 
-  newest(stream) {
-    return this.fetch(`/streams/${stream.name}/newest`).then(res =>
-      getJSON(res).then(event => {
-        return {
-          event,
-          ts: new Date(res.headers.get('Timestamp')),
-          id: res.headers.get('Location')
-        };
-      })
-    );
-  }
-
-  oldest(stream) {
-    return this.fetch(`/streams/${stream.name}/oldest`).then(res =>
-      getJSON(res).then(event => {
-        return {
-          event,
-          ts: new Date(res.headers.get('Timestamp')),
-          id: res.headers.get('Location')
-        };
-      })
-    );
-  }
-
   get(stream, eid) {
     const base = `/streams/${stream.name}`;
     const url = eid ? `${base}/events/${eid}` : base;
@@ -398,14 +374,6 @@ export class Stream {
 
   values() {
     return this._client.values(this);
-  }
-
-  newest() {
-    return this._client.newest(this);
-  }
-
-  oldest() {
-    return this._client.oldest(this);
   }
 
   // TODO: get, put
