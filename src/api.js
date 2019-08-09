@@ -91,9 +91,10 @@ class Pattern {
 class Client {
   constructor(config) {
     this.auth_key = config.auth_key;
-    this.host = config.host
-      ? trimTrailing('/', config.host)
-      : 'https://api.sentenai.com';
+    this.host =
+      typeof config.host === 'string'
+        ? trimTrailing('/', config.host)
+        : 'https://api.sentenai.com';
 
     this._fetch =
       typeof window === 'object' && typeof window.fetch === 'function'
@@ -426,7 +427,7 @@ export class Stream {
   }
 }
 
-class Field {
+export class Field {
   constructor(stream, { id, path, start }) {
     this.stream = stream;
     this.id = id;
