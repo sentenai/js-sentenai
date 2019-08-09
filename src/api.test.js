@@ -1,5 +1,5 @@
 const fetchMock = require('fetch-mock');
-const { Stream, Field } = require('../src/api.js');
+const { Stream, Field, Pattern } = require('../src/api.js');
 const Client = require('../src/api.js').default;
 
 function mockClient(matcher, response, opts) {
@@ -29,8 +29,34 @@ test('Client#streams', () => {
   ]);
   return client.streams().then(streams => {
     expect(streams).toHaveLength(1);
-    let first = streams[0];
-    expect(first).toBeInstanceOf(Stream);
+    streams.forEach(stream => {
+      expect(stream).toBeInstanceOf(Stream);
+    });
+  });
+});
+
+test('Client#patterns', () => {
+  let client = mockClient('/patterns', [
+    {
+      anonymous: false,
+      created: '2019-08-08T18:14:19.131384517Z',
+      description: '',
+      name: 'high-humidity',
+      query: "weather when ('humidity' > 0.8)",
+      streams: [
+        {
+          name: 'weather'
+        }
+      ]
+    }
+  ]);
+  return client.patterns().then(patterns => {
+    expect(patterns).toHaveLength(1);
+    let first = patterns[0];
+    expect(first).toBeInstanceOf(Pattern);
+    expect(first.anonymous).toEqual(false);
+    expect(first.name).toEqual('high-humidity');
+    expect(first.created).toBeInstanceOf(Date);
   });
 });
 
@@ -48,10 +74,42 @@ test('Stream#fields', () => {
       start: '2010-01-01T00:00:00Z'
     }
   ]);
-  let stream = new Stream(client, name);
+  let stream = client.stream(name);
   return stream.fields().then(fields => {
     expect(fields).toHaveLength(2);
-    let first = fields[0];
-    expect(first).toBeInstanceOf(Field);
+    fields.forEach(f => {
+      expect(f).toBeInstanceOf(Field);
+      expect(f.start).toBeInstanceOf(Date);
+    });
   });
 });
+
+test('Stream#values', () => {
+  let name = 'big-data';
+  let client = mockClient(`/streams/${name}`, [
+    {
+      id: 'XTlo-cry0yMB8PLUB0u2CbhX',
+      path: ['summary'],
+      ts: '2010-12-11T00:00:00Z',
+      value: 'Mostly cloudy in the morning.'
+    },
+    {
+      id: 'XTlo-cry0yMB8PLUB0u2CbhX',
+      path: ['humidity'],
+      ts: '2010-12-11T00:00:00Z',
+      value: 0.67
+    }
+  ]);
+  let stream = client.stream(name);
+  return stream.values().then(values => {
+    expect(values).toHaveLength(2);
+    values.forEach(value => {
+      expect(value.value).toBeDefined();
+      expect(value.id).toBeDefined();
+      expect(value.ts).toBeInstanceOf(Date);
+      expect(value.path).toBeInstanceOf(Array);
+    });
+  });
+});
+
+// test('Field#stats', () => {});

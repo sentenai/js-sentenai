@@ -55,14 +55,14 @@ class View {
   }
 }
 
-class Pattern {
+export class Pattern {
   constructor(client, { name, description, query, anonymous, created }) {
     this._client = client;
     this.name = name;
     this.description = description;
     this.query = query;
     this.anonymous = anonymous;
-    this.created = created;
+    this.created = new Date(created);
   }
 
   spans() {
@@ -212,9 +212,16 @@ class Client {
       });
   }
 
-  values(stream) {
-    const query = stream.filter ? '?filters=' + base64(stream.filter.ast) : '';
-    return this.fetch(`/streams/${stream.name}/values${query}`)
+  values(stream, at) {
+    const params = {};
+    if (at instanceof Date) {
+      params.at = at.toISOString();
+    }
+    if (stream.filter) {
+      params.filters = base64(stream.filter.ast);
+    }
+    const query = Object.keys(params).length ? '?' + queryString(params) : '';
+    return this.fetch(`/streams/${stream.name}${query}`)
       .then(getJSON)
       .then(values => {
         return values.map(v => ({
@@ -315,6 +322,7 @@ class Client {
     }).then(handleStatusCode);
   }
 
+  // TODO: turn this into `events(start, end, limit, sort, offset, filters)`
   range(stream, start, end) {
     const esc = encodeURIComponent;
     const url = `/streams/${stream.name}/start/${esc(
@@ -382,6 +390,8 @@ export class Stream {
     return this._client.stats(this, field, opts);
   }
 
+  // TODO: calling stats is a bug
+  // TODO: turn into `events`, see Client#events
   range(start, end) {
     return this._client.stats(this, start, end);
   }
