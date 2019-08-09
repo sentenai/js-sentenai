@@ -355,6 +355,11 @@ export class Stream {
       filter && filter.constructor === Object ? new Filter(filter) : filter;
   }
 
+  toString() {
+    // TODO: include filters?
+    return this.name;
+  }
+
   withFilter(filter) {
     return new Stream(this._client, this.name, filter);
   }
@@ -424,12 +429,15 @@ export class Field {
   }
 
   stats(opts) {
-    return this.stream.stats(this.toString(), opts);
+    return this.stream.stats(this.pathString(), opts);
+  }
+
+  pathString() {
+    return this.path.join('.');
   }
 
   toString() {
-    // TODO: corona#659
-    return this.path.join('.');
+    return `${this.stream.toString()}:${this.pathString()}`;
   }
 }
 

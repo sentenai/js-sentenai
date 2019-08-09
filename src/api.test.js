@@ -132,6 +132,7 @@ test('Field#stats', () => {
     path: ['humidity'],
     start: new Date()
   });
+  expect(field.toString()).toEqual(`${name}:${fieldName}`);
   return field.stats().then(stats => {
     expect(stats).toMatchObject({
       categorical: {},
