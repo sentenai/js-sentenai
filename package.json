@@ -40,7 +40,6 @@
     "fetch-mock": "7.3.9",
     "jest": "23.6.0",
     "rollup": "^0.55.1",
-    "rollup-plugin-async": "^1.2.0",
     "rollup-plugin-babel": "^3.0.3"
   }
 }

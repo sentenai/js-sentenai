@@ -1,5 +1,4 @@
-import babel from 'rollup-plugin-babel'
-import async from 'rollup-plugin-async'
+import babel from 'rollup-plugin-babel';
 
 export default {
   input: 'index.js',
@@ -10,8 +9,5 @@ export default {
     extend: true
   },
   external: ['isomorphic-fetch'],
-  plugins: [
-    async(),
-    babel()
-  ]
-}
+  plugins: [babel()]
+};
