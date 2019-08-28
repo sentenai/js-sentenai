@@ -1,5 +1,5 @@
 const fetchMock = require('fetch-mock');
-const { Stream, Field, Pattern } = require('../src/api.js');
+const { Stream, Field, Pattern, View } = require('../src/api.js');
 const Client = require('../src/api.js').default;
 
 function mockClient(matcher, response, opts) {
@@ -101,6 +101,50 @@ test('Client#pattern named neoflare', () => {
     expect(pattern.name).toEqual(name);
     expect(pattern.anonymous).toEqual(false);
     expect(pattern.created).toBeInstanceOf(Date);
+  });
+});
+
+test('Client#views', () => {
+  let client = mockClient(`/views`, [
+    {
+      anonymous: false,
+      created: '2019-08-28T17:36:37.951819011Z',
+      description: 'hi',
+      name: 'some-dew',
+      streams: [
+        {
+          filter: {
+            expr: true
+          },
+          name: 'weather'
+        }
+      ],
+      view: {
+        projection: {
+          'weather:dewPoint': [
+            {
+              var: ['event', 'dewPoint']
+            }
+          ]
+        },
+        stream: {
+          filter: {
+            expr: true
+          },
+          name: 'weather'
+        }
+      }
+    }
+  ]);
+
+  return client.views().then(views => {
+    expect(views).toHaveLength(1);
+    views.forEach(view => {
+      expect(view).toBeInstanceOf(View);
+      expect(view.anonymous).toEqual(false);
+      expect(view.name).toEqual('some-dew');
+      expect(view.created).toBeInstanceOf(Date);
+    });
   });
 });
 

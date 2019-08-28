@@ -17,13 +17,13 @@ class AuthenticationError extends Error {}
 class APIError extends Error {}
 class NotFound extends Error {}
 
-class View {
+export class View {
   constructor(client, { name, description, anonymous, created, view }) {
     this._client = client;
     this.name = name;
     this.description = description;
     this.anonymous = anonymous;
-    this.created = created;
+    this.created = new Date(created);
     this.view = view;
   }
 
