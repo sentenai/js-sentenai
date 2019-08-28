@@ -16,7 +16,6 @@ class SentenaiException extends Error {}
 class AuthenticationError extends Error {}
 class APIError extends Error {}
 class NotFound extends Error {}
-const sum = list => list.reduce((total, num) => total + num, 0);
 
 class View {
   constructor(client, id, name, description) {
