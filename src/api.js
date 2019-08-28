@@ -64,9 +64,22 @@ export class Pattern {
     this.created = new Date(created);
   }
 
-  spans() {
+  search(opts = {}) {
+    const params = {};
+    if (opts.start) {
+      params.start = opts.start.toISOString();
+    }
+    if (opts.end) {
+      params.end = opts.end.toISOString();
+    }
+    if (typeof opts.limit === 'number') {
+      params.limit = opts.limit;
+    }
+    if (typeof opts.timeout === 'number') {
+      params.timeout = opts.timeout;
+    }
     return this._client
-      .fetch(`/patterns/${this.name}/search`)
+      .fetch(`/patterns/${this.name}/search?${queryString(params)}`)
       .then(getJSON)
       .then(spans =>
         spans.map(({ start, end }) => ({
