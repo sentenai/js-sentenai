@@ -18,11 +18,13 @@ class APIError extends Error {}
 class NotFound extends Error {}
 
 class View {
-  constructor(client, id, name, description) {
+  constructor(client, { name, description, anonymous, created, view }) {
     this._client = client;
-    this.id = id;
     this.name = name;
     this.description = description;
+    this.anonymous = anonymous;
+    this.created = created;
+    this.view = view;
   }
 
   data(opts = {}) {
@@ -41,7 +43,7 @@ class View {
       params.sort = sort;
     }
     return this._client
-      .fetch(`/views/${this.id}/data?${queryString(params)}`)
+      .fetch(`/views/${this.name}/data?${queryString(params)}`)
       .then(getJSON)
       .then(({ streams, events }) => {
         // TODO: ignoring `streams` for now
@@ -143,8 +145,31 @@ class Client {
     }).then(res => {
       handleStatusCode(res);
       const viewId = res.headers.get('Location');
-      return new View(this, viewId, name, description);
+      return new View(this, {
+        name: name || res.headers.get('Location'),
+        description,
+        anonymous: !name,
+        created: res.headers.get('Date'),
+        view
+      });
     });
+  }
+  views(opts = {}) {
+    // name, desc, containing, limit
+    return this.fetch(`/views?${queryString(opts)}`)
+      .then(getJSON)
+      .then(list =>
+        list.map(
+          ({ name, description, streams, view, anonymous, created }) =>
+            new View(this, {
+              name,
+              description,
+              view,
+              anonymous,
+              created
+            })
+        )
+      );
   }
 
   pattern(pattern, name = '', description = '') {
