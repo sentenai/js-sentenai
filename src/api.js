@@ -322,23 +322,36 @@ class Client {
     }).then(handleStatusCode);
   }
 
-  // TODO: turn this into `events(start, end, limit, sort, offset, filters)`
-  range(stream, start, end) {
-    const esc = encodeURIComponent;
-    const url = `/streams/${stream.name}/start/${esc(
-      start.toISOString()
-    )}/end/${esc(end.toISOString())}`;
+  events(stream, opts = {}) {
+    const { start, end, limit, sort, offset } = opts;
+    const params = {};
+    if (start) {
+      params.start = start.toISOString();
+    }
+    if (end) {
+      params.end = end.toISOString();
+    }
+    if (typeof limit === 'number') {
+      params.limit = limit;
+    }
+    if (typeof offset === 'number') {
+      params.offset = offset;
+    }
+    if (sort) {
+      params.sort = sort;
+    }
+    if (stream.filter) {
+      params.filters = base64(stream.filter.ast);
+    }
+
+    const url = `/streams/${stream.name}/events?${queryString(params)}`;
     return this.fetch(url)
-      .then(res => {
-        handleStatusCode(res);
-        return res.text();
-      })
-      .then(text =>
-        JSON.parse(text).map(item =>
-          Object.assign({}, item, {
-            ts: new Date(item.ts)
-          })
-        )
+      .then(getJSON)
+      .then(events =>
+        events.map(e => ({
+          ...e,
+          ts: new Date(e.ts)
+        }))
       );
   }
 
@@ -395,8 +408,9 @@ export class Stream {
     return this._client.stats(this, field, opts);
   }
 
-  // TODO:
-  // events({start, end}) { }
+  events(opts = {}) {
+    return this._client.events(this, opts);
+  }
 
   get ast() {
     const ast = { name: this.name };
