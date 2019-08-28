@@ -60,6 +60,41 @@ test('Client#patterns', () => {
   });
 });
 
+test('Client#pattern neoflare', () => {
+  let query = 'weather when humidity > 0.7';
+  let loc = 'abc';
+  let client = mockClient(
+    '/patterns',
+    new Response(
+      { pattern: query },
+      { status: 201, headers: { Location: loc } }
+    )
+  );
+
+  return client.pattern(query).then(pattern => {
+    expect(pattern.query).toEqual(query);
+    expect(pattern.name).toEqual(loc);
+    expect(pattern.anonymous).toEqual(true);
+    expect(pattern.created).toBeInstanceOf(Date);
+  });
+});
+
+test('Client#pattern named neoflare', () => {
+  let query = 'weather when temp < 32.0';
+  let name = 'colddd';
+  let client = mockClient(
+    `/patterns/${name}`,
+    new Response({ pattern: query }, { status: 201 })
+  );
+
+  return client.pattern(query, name).then(pattern => {
+    expect(pattern.query).toEqual(query);
+    expect(pattern.name).toEqual(name);
+    expect(pattern.anonymous).toEqual(false);
+    expect(pattern.created).toBeInstanceOf(Date);
+  });
+});
+
 test('Stream#fields', () => {
   let name = 'weather';
   let client = mockClient(`/streams/${name}/fields`, [
