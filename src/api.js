@@ -178,25 +178,11 @@ class Client {
       );
   }
 
-  streams(name = '', meta = {}) {
+  // TODO: support `q`
+  streams(name = '') {
     return this.fetch('/streams')
       .then(getJSON)
-      .then(streamList => {
-        name = name.toLowerCase();
-
-        return streamList
-          .filter(s => {
-            let match = true;
-            if (name) {
-              match = s.name.toLowerCase().includes(name);
-            }
-            Object.keys(meta).forEach(key => {
-              match = match && s.meta[key] === meta[key];
-            });
-            return match;
-          })
-          .map(s => new Stream(this, s.name));
-      });
+      .then(streamList => streamList.map(s => new Stream(this, s.name)));
   }
 
   fields(stream) {
