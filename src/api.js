@@ -395,11 +395,8 @@ export class Stream {
     return this._client.stats(this, field, opts);
   }
 
-  // TODO: calling stats is a bug
-  // TODO: turn into `events`, see Client#events
-  range(start, end) {
-    return this._client.stats(this, start, end);
-  }
+  // TODO:
+  // events({start, end}) { }
 
   get ast() {
     const ast = { name: this.name };
