@@ -10,6 +10,10 @@ function mockClient(matcher, response, opts) {
   return client;
 }
 
+/*
+  ~~ Client ~~
+*/
+
 test('create client with trailing /', () => {
   let host = 'https://my.sentenai.com';
   let client = new Client({
@@ -174,6 +178,10 @@ test('Client#view', () => {
   });
 });
 
+/*
+  ~~ Stream ~~
+*/
+
 test('Stream#fields', () => {
   let name = 'weather';
   let client = mockClient(`/streams/${name}/fields`, [
@@ -226,6 +234,10 @@ test('Stream#values', () => {
   });
 });
 
+/*
+  ~~ Field ~~
+*/
+
 test('Field#stats', () => {
   let name = 'weather';
   let fieldName = 'humidity';
@@ -258,6 +270,65 @@ test('Field#stats', () => {
         missing: 0,
         std: 0.15552099400186697
       }
+    });
+  });
+});
+
+/*
+  ~~ Pattern ~~
+*/
+
+test('Pattern#search', () => {
+  let name = 'my-pattern';
+  let client = mockClient(`/patterns/${name}/search`, [
+    { start: '2010-01-01T00:00:00Z', end: '2010-01-09T00:00:00Z' },
+    { start: '2010-01-11T00:00:00Z', end: '2010-01-13T00:00:00Z' }
+  ]);
+
+  let pattern = new Pattern(client, {
+    name
+  });
+
+  return pattern.search().then(spans => {
+    expect(spans).toHaveLength(2);
+    spans.forEach(span => {
+      expect(span.start).toBeInstanceOf(Date);
+      expect(span.end).toBeInstanceOf(Date);
+    });
+  });
+});
+
+/*
+  ~~ View ~~
+*/
+
+test('View#data', () => {
+  let name = 'my-view';
+  let client = mockClient(`/views/${name}/data`, {
+    events: [
+      {
+        duration: null,
+        event: {},
+        id: 'abc123',
+        stream: 'weather',
+        ts: '2010-02-15T00:00:00Z'
+      }
+    ],
+    streams: {}
+  });
+
+  let view = new View(client, {
+    name
+  });
+
+  return view.data().then(data => {
+    expect(data).toHaveLength(1);
+    data.forEach(datum => {
+      expect(datum.duration).toBeNull();
+      expect(datum.event).toMatchObject({});
+      expect(typeof datum.id).toBe('string');
+      expect(typeof datum.stream).toBe('string');
+      expect(datum.ts).toBeInstanceOf(Date);
     });
   });
 });

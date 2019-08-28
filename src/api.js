@@ -22,7 +22,7 @@ export class View {
     this._client = client;
     this.name = name;
     this.description = description || '';
-    this.anonymous = anonymous;
+    this.anonymous = anonymous || false;
     this.created = new Date(created);
     this.view = view;
   }
@@ -60,10 +60,10 @@ export class Pattern {
   constructor(client, { name, description, query, anonymous, created }) {
     this._client = client;
     this.name = name;
-    this.description = description;
-    this.query = query;
-    this.anonymous = anonymous;
+    this.description = description || null;
+    this.anonymous = anonymous || false;
     this.created = new Date(created);
+    this.query = query;
   }
 
   search(opts = {}) {
