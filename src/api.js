@@ -21,7 +21,7 @@ export class View {
   constructor(client, { name, description, anonymous, created, view }) {
     this._client = client;
     this.name = name;
-    this.description = description;
+    this.description = description || '';
     this.anonymous = anonymous;
     this.created = new Date(created);
     this.view = view;

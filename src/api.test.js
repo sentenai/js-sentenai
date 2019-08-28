@@ -148,6 +148,32 @@ test('Client#views', () => {
   });
 });
 
+test('Client#view', () => {
+  let viewAst = {
+    description: 'hi',
+    view: {
+      stream: { name: 'weather', filter: { expr: true } },
+      projection: {
+        '...': false,
+        'weather:dewPoint': [{ var: ['event', 'dewPoint'] }]
+      }
+    }
+  };
+  let loc = 'abc123';
+  let client = mockClient(
+    '/views',
+    new Response('', { status: 201, headers: { Location: loc } })
+  );
+
+  return client.view(viewAst).then(view => {
+    expect(view.name).toEqual(loc);
+    expect(view.description).toEqual('');
+    expect(view.anonymous).toEqual(true);
+    expect(view.created).toBeInstanceOf(Date);
+    expect(view.view).toMatchObject(viewAst);
+  });
+});
+
 test('Stream#fields', () => {
   let name = 'weather';
   let client = mockClient(`/streams/${name}/fields`, [
