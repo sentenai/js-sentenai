@@ -18,7 +18,7 @@ const sentenai = new Sentenai.Client({ auth_key: '' });
 
 const spans = await sentenai
   .pattern('my-stream-id when temp > 82.3')
-  .then(cursor => cursor.spans());
+  .then(pattern => pattern.search());
 ```
 
 View [our docs](http://docs.sentenai.com/) to learn more.
