@@ -234,6 +234,35 @@ test('Stream#values', () => {
   });
 });
 
+test('Stream#events', () => {
+  let name = 'big-data';
+  let client = mockClient(`/streams/${name}/events?limit=2`, [
+    {
+      duration: null,
+      event: {},
+      id: 'XTlo-cry0yMB8PLUB0u2CbhX',
+      ts: '2010-12-11T00:00:00Z'
+    },
+    {
+      duration: null,
+      event: {},
+      id: 'XTlo-cry0yMB8PLUB0u2CbhX',
+      ts: '2010-12-11T00:00:00Z'
+    }
+  ]);
+
+  let stream = client.stream(name);
+  return stream.events({ limit: 2 }).then(events => {
+    expect(events).toHaveLength(2);
+    events.forEach(({ duration, event, ts, id }) => {
+      expect(duration).toBeNull();
+      expect(event).toMatchObject({});
+      expect(ts).toBeInstanceOf(Date);
+      expect(typeof id).toBe('string');
+    });
+  });
+});
+
 /*
   ~~ Field ~~
 */
