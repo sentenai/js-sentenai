@@ -10,6 +10,15 @@ function mockClient(matcher, response, opts) {
   return client;
 }
 
+test('create client with trailing /', () => {
+  let host = 'https://my.sentenai.com';
+  let client = new Client({
+    host: host + '/'
+  });
+
+  expect(client.host).toEqual(host);
+});
+
 test('Client#ping', () => {
   return mockClient('/', 200)
     .ping()
