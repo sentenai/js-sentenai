@@ -33,5 +33,14 @@ $ npm test
 To automatically run `jest` as you update code:
 
 ```
-$ npx jest --watch
+$ npm test -- --watch
+```
+
+To evaluate current testing coverage:
+
+```
+$ npm test -- --coverage
+# generate html report in /coverage
+$ npm test -- --coverage --coverageReporters "html"
+$ open coverage/index.html
 ```
