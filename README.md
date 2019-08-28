@@ -4,8 +4,10 @@
 
 [![Build Status](https://travis-ci.org/Sentenai/js-sentenai.svg?branch=master)](https://travis-ci.org/Sentenai/js-sentenai) [![npm version](https://badge.fury.io/js/sentenai.svg)](https://badge.fury.io/js/sentenai)
 
+This library is still unstable. Install an exact version to avoid breaking changes.
+
 ```shell
-$ npm install --save sentenai
+$ npm install --save --save-exact sentenai
 ```
 
 ## usage
