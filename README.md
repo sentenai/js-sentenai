@@ -27,21 +27,22 @@ View [our docs](http://docs.sentenai.com/) to learn more.
 
 All testing is currently handled by [`jest`](https://facebook.github.io/jest/).
 
-```
+```shell
 $ npm install
 $ npm test
 ```
 
 To automatically run `jest` as you update code:
 
-```
+```shell
 $ npm test -- --watch
 ```
 
 To evaluate current testing coverage:
 
-```
+```shell
 $ npm test -- --coverage
+
 # generate html report in /coverage
 $ npm test -- --coverage --coverageReporters "html"
 $ open coverage/index.html
