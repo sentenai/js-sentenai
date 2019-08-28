@@ -298,6 +298,27 @@ test('Pattern#search', () => {
   });
 });
 
+test('Pattern#saveAs', () => {
+  let name = 'my-pattern';
+  let query = 'weather when temp > 0.5';
+
+  let client = mockClient(
+    `/patterns/${name}`,
+    new Response({ pattern: query }, { status: 201 })
+  );
+
+  let pattern = new Pattern(client, {
+    name: 'some-generated-id',
+    anonymous: true,
+    query
+  });
+
+  return pattern.saveAs(name).then(pattern => {
+    expect(pattern.name).toEqual(name);
+    expect(pattern.anonymous).toEqual(false);
+  });
+});
+
 /*
   ~~ View ~~
 */
