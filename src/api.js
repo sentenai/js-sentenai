@@ -215,9 +215,9 @@ class Client {
       );
   }
 
-  // TODO: support `q`
-  streams(name = '') {
-    return this.fetch('/streams')
+  streams(q) {
+    const url = q ? `/streams?q=${base64(q)}` : '/streams';
+    return this.fetch(url)
       .then(getJSON)
       .then(streamList => streamList.map(s => new Stream(this, s.name)));
   }
