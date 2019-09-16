@@ -8,15 +8,6 @@ import {
 } from './flare';
 import btoa from 'btoa';
 
-// https://stackoverflow.com/a/27093173
-const minDate = new Date(1, 0, 1, 0, 0, 0);
-const maxDate = new Date(9990, 11, 31, 23, 59, 59);
-
-class SentenaiException extends Error {}
-class AuthenticationError extends Error {}
-class APIError extends Error {}
-class NotFound extends Error {}
-
 export class View {
   constructor(client, { name, description, anonymous, created, view }) {
     this._client = client;
@@ -488,7 +479,7 @@ function queryString(params) {
 function handleStatusCode(res) {
   const code = res.status;
 
-  if (code === 401) {
+  if (code === 401 || code === 403) {
     throw new AuthenticationError('Invalid API key');
   } else if (code >= 500) {
     throw new SentenaiException('Something went wrong');
@@ -512,5 +503,21 @@ function trimTrailing(char, str) {
   }
   return str;
 }
+
+// https://stackoverflow.com/a/27093173
+const minDate = new Date(1, 0, 1, 0, 0, 0);
+const maxDate = new Date(9990, 11, 31, 23, 59, 59);
+
+class SentenaiException extends Error {}
+class AuthenticationError extends Error {}
+class APIError extends Error {}
+class NotFound extends Error {}
+
+export const errors = {
+  SentenaiException,
+  AuthenticationError,
+  APIError,
+  NotFound
+};
 
 export default Client;

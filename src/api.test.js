@@ -1,5 +1,5 @@
 const fetchMock = require('fetch-mock');
-const { Stream, Field, Pattern, View } = require('../src/api.js');
+const { Stream, Field, Pattern, View, errors } = require('../src/api.js');
 const Client = require('../src/api.js').default;
 
 function mockClient(matcher, response, opts) {
@@ -45,6 +45,20 @@ test('Client#streams', () => {
     streams.forEach(stream => {
       expect(stream).toBeInstanceOf(Stream);
     });
+  });
+});
+
+test('Client#streams 403', () => {
+  let client = mockClient('/streams', new Response({}, { status: 403 }));
+  return client.streams().catch(err => {
+    expect(err).toBeInstanceOf(errors.AuthenticationError);
+  });
+});
+
+test('Client#streams 404', () => {
+  let client = mockClient('/streams', new Response({}, { status: 404 }));
+  return client.streams().catch(err => {
+    expect(err).toBeInstanceOf(errors.NotFound);
   });
 });
 

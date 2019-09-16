@@ -1,4 +1,11 @@
-import { default as Client, Stream, Field, View, Pattern } from './src/api.js';
+import {
+  default as Client,
+  Stream,
+  Field,
+  View,
+  Pattern,
+  errors
+} from './src/api.js';
 import * as flare from './src/flare.js';
 
 export default {
@@ -7,5 +14,6 @@ export default {
   Field,
   View,
   Pattern,
+  errors,
   flare
 };
