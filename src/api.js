@@ -8,7 +8,7 @@ import {
 } from './flare';
 import btoa from 'btoa';
 
-class Client {
+export default class Client {
   constructor(config) {
     this.auth_key = config.auth_key;
     this.host =
@@ -519,5 +519,3 @@ export const errors = {
   APIError,
   NotFound
 };
-
-export default Client;
