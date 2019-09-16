@@ -8,91 +8,6 @@ import {
 } from './flare';
 import btoa from 'btoa';
 
-export class View {
-  constructor(client, { name, description, anonymous, created, view }) {
-    this._client = client;
-    this.name = name;
-    this.description = description || '';
-    this.anonymous = anonymous || false;
-    this.created = new Date(created);
-    this.view = view;
-  }
-
-  data(opts = {}) {
-    const { start, end, limit, sort } = opts;
-    const params = {};
-    if (start) {
-      params.start = start.toISOString();
-    }
-    if (end) {
-      params.end = end.toISOString();
-    }
-    if (limit) {
-      params.limit = limit;
-    }
-    if (sort) {
-      params.sort = sort;
-    }
-    return this._client
-      .fetch(`/views/${this.name}/data?${queryString(params)}`)
-      .then(getJSON)
-      .then(({ streams, events }) => {
-        // TODO: ignoring `streams` for now
-        return events.map(e =>
-          Object.assign({}, e, {
-            ts: new Date(e.ts)
-          })
-        );
-      });
-  }
-}
-
-export class Pattern {
-  constructor(client, { name, description, query, anonymous, created }) {
-    this._client = client;
-    this.name = name;
-    this.description = description || null;
-    this.anonymous = anonymous || false;
-    this.created = new Date(created);
-    this.query = query;
-  }
-
-  search(opts = {}) {
-    const params = {};
-    if (opts.start) {
-      params.start = opts.start.toISOString();
-    }
-    if (opts.end) {
-      params.end = opts.end.toISOString();
-    }
-    if (typeof opts.limit === 'number') {
-      params.limit = opts.limit;
-    }
-    if (typeof opts.timeout === 'number') {
-      params.timeout = opts.timeout;
-    }
-    return this._client
-      .fetch(`/patterns/${this.name}/search?${queryString(params)}`)
-      .then(getJSON)
-      .then(spans =>
-        spans.map(({ start, end }) => ({
-          start: new Date(start),
-          end: new Date(end)
-        }))
-      );
-  }
-
-  saveAs(name, description = '') {
-    return this._client.pattern(this.query, name, description);
-  }
-
-  delete() {
-    return this._client
-      .fetch(`/patterns/${this.name}`, { method: 'DELETE' })
-      .then(handleStatusCode);
-  }
-}
-
 class Client {
   constructor(config) {
     this.auth_key = config.auth_key;
@@ -463,6 +378,91 @@ export class Field {
 
   toString() {
     return `${this.stream.toString()}:${this.pathString()}`;
+  }
+}
+
+export class Pattern {
+  constructor(client, { name, description, query, anonymous, created }) {
+    this._client = client;
+    this.name = name;
+    this.description = description || null;
+    this.anonymous = anonymous || false;
+    this.created = new Date(created);
+    this.query = query;
+  }
+
+  search(opts = {}) {
+    const params = {};
+    if (opts.start) {
+      params.start = opts.start.toISOString();
+    }
+    if (opts.end) {
+      params.end = opts.end.toISOString();
+    }
+    if (typeof opts.limit === 'number') {
+      params.limit = opts.limit;
+    }
+    if (typeof opts.timeout === 'number') {
+      params.timeout = opts.timeout;
+    }
+    return this._client
+      .fetch(`/patterns/${this.name}/search?${queryString(params)}`)
+      .then(getJSON)
+      .then(spans =>
+        spans.map(({ start, end }) => ({
+          start: new Date(start),
+          end: new Date(end)
+        }))
+      );
+  }
+
+  saveAs(name, description = '') {
+    return this._client.pattern(this.query, name, description);
+  }
+
+  delete() {
+    return this._client
+      .fetch(`/patterns/${this.name}`, { method: 'DELETE' })
+      .then(handleStatusCode);
+  }
+}
+
+export class View {
+  constructor(client, { name, description, anonymous, created, view }) {
+    this._client = client;
+    this.name = name;
+    this.description = description || '';
+    this.anonymous = anonymous || false;
+    this.created = new Date(created);
+    this.view = view;
+  }
+
+  data(opts = {}) {
+    const { start, end, limit, sort } = opts;
+    const params = {};
+    if (start) {
+      params.start = start.toISOString();
+    }
+    if (end) {
+      params.end = end.toISOString();
+    }
+    if (limit) {
+      params.limit = limit;
+    }
+    if (sort) {
+      params.sort = sort;
+    }
+    return this._client
+      .fetch(`/views/${this.name}/data?${queryString(params)}`)
+      .then(getJSON)
+      .then(({ streams, events }) => {
+        // TODO: ignoring `streams` for now
+        return events.map(e =>
+          Object.assign({}, e, {
+            ts: new Date(e.ts)
+          })
+        );
+      });
   }
 }
 
