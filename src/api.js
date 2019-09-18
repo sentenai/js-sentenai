@@ -298,6 +298,17 @@ export class Stream {
       filter && filter.constructor === Object ? new Filter(filter) : filter;
   }
 
+  create() {
+    return this._client
+      .fetch(`/streams/${this.name}`, {
+        method: 'POST'
+      })
+      .then(res => {
+        handleStatusCode(res);
+        return this;
+      });
+  }
+
   toString() {
     // TODO: include filters?
     return this.name;
