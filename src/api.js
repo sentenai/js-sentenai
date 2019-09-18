@@ -484,7 +484,8 @@ function handleStatusCode(res) {
   } else if (code >= 500) {
     throw new SentenaiException('Something went wrong');
   } else if (code === 400) {
-    throw new FlareException();
+    // TODO: pass response body `message` thru
+    throw new BadRequest();
   } else if (code === 404) {
     throw new NotFound();
   } else if (code >= 400) {
@@ -508,10 +509,36 @@ function trimTrailing(char, str) {
 const minDate = new Date(1, 0, 1, 0, 0, 0);
 const maxDate = new Date(9990, 11, 31, 23, 59, 59);
 
-class SentenaiException extends Error {}
-class AuthenticationError extends Error {}
-class APIError extends Error {}
-class NotFound extends Error {}
+class SentenaiException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'SentenaiException';
+  }
+}
+class AuthenticationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'AuthenticationError';
+  }
+}
+class APIError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'APIError';
+  }
+}
+class BadRequest extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'BadRequest';
+  }
+}
+class NotFound extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'NotFound';
+  }
+}
 
 export const errors = {
   SentenaiException,

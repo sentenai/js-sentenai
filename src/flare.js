@@ -1,4 +1,9 @@
-export class FlareException extends Error {}
+export class FlareException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'FlareException';
+  }
+}
 
 export function makeSpans(stream, conds, path) {
   if (typeof path === 'undefined') {

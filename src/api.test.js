@@ -166,6 +166,13 @@ test('Client#views', () => {
   });
 });
 
+test('Client#views 403', () => {
+  let client = mockClient('/views', new Response({}, { status: 403 }));
+  return client.views().catch(err => {
+    expect(err).toBeInstanceOf(errors.AuthenticationError);
+  });
+});
+
 test('Client#view', () => {
   let viewAst = {
     description: 'hi',
@@ -189,6 +196,19 @@ test('Client#view', () => {
     expect(view.anonymous).toEqual(true);
     expect(view.created).toBeInstanceOf(Date);
     expect(view.view).toMatchObject(viewAst);
+  });
+});
+
+test('Client#get stream 404', () => {
+  let name = 'hello';
+  let client = mockClient(
+    `/streams/${name}`,
+    new Response({ code: 404 }, { status: 404 })
+  );
+
+  let stream = client.stream(name);
+  stream.create().catch(err => {
+    expect(err).toBeInstanceOf(errors.NotFound);
   });
 });
 
