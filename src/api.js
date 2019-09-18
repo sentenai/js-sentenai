@@ -104,8 +104,9 @@ export default class Client {
       }
     });
   }
-  patterns() {
-    return this.fetch('/patterns')
+
+  patterns(opts = {}) {
+    return this.fetch(`/patterns?${queryString(opts)}`)
       .then(getJSON)
       .then(list =>
         list.map(
