@@ -196,7 +196,7 @@ export default class Client {
     if (id) {
       return this.fetch(url, {
         headers,
-        method: 'put',
+        method: 'PUT',
         body: JSON.stringify(event)
       }).then(res => {
         handleStatusCode(res);
@@ -205,7 +205,7 @@ export default class Client {
     } else {
       return this.fetch(url, {
         headers,
-        method: 'post',
+        method: 'POST',
         body: JSON.stringify(event)
       }).then(res => {
         handleStatusCode(res);
