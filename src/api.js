@@ -182,15 +182,16 @@ export default class Client {
     });
   }
 
-  put(stream, event, opts = {}) {
+  upload(stream, event, opts = {}) {
     const { id, timestamp } = opts;
 
-    const headers = this.getHeaders();
     const base = `/streams/${stream.name}/events`;
     const url = id ? `${base}/${id}` : base;
 
+    const headers = {};
     if (timestamp) {
-      headers.timestamp = timestamp.toISOString();
+      headers.timestamp =
+        timestamp instanceof Date ? timestamp.toISOString() : timestamp;
     }
 
     if (id) {
@@ -298,9 +299,19 @@ export class Stream {
       filter && filter.constructor === Object ? new Filter(filter) : filter;
   }
 
-  create() {
+  toString() {
+    // TODO: include filters?
+    return this.name;
+  }
+
+  create(t0) {
+    const headers = {};
+    if (typeof t0 === 'number') {
+      headers.t0 = t0;
+    }
     return this._client
       .fetch(`/streams/${this.name}`, {
+        headers,
         method: 'POST'
       })
       .then(res => {
@@ -309,9 +320,8 @@ export class Stream {
       });
   }
 
-  toString() {
-    // TODO: include filters?
-    return this.name;
+  upload(event, opts = {}) {
+    this._client.upload(this, event, opts);
   }
 
   withFilter(filter) {
