@@ -122,9 +122,23 @@ export default class Client {
       );
   }
 
-  streams(q) {
-    const url = q ? `/streams?q=${base64(q)}` : '/streams';
-    return this.fetch(url)
+  streams(opts = {}) {
+    const params = {};
+    const { q, name, limit, skip } = opts;
+    if (q) {
+      params.q = base64(q);
+    }
+    if (name) {
+      params.name = name;
+    }
+    if (typeof limit === 'number') {
+      params.limit = limit;
+    }
+    if (typeof skip === 'number') {
+      params.skip = skip;
+    }
+    const query = Object.keys(params).length ? '?' + queryString(params) : '';
+    return this.fetch(`/streams${query}`)
       .then(getJSON)
       .then(streamList => streamList.map(s => new Stream(this, s.name)));
   }
