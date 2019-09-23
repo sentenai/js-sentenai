@@ -27,7 +27,7 @@ export function makeSpans(stream, conds, path) {
     }
   }
   if (ands.length === 0) {
-    throw FlareException('`*` not supported yet');
+    throw new FlareException('`*` not supported yet');
   } else if (ands.length === 1) {
     return ands[0];
   } else {
@@ -390,7 +390,7 @@ export function select(options) {
 
   return function() {
     if (arguments.length === 0) {
-      throw FlareException('select * not supported yet');
+      throw new FlareException('select * not supported yet');
     } else if (arguments.length === 1) {
       return new Select(arguments[0], options.start, options.end);
     } else {
