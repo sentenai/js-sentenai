@@ -398,9 +398,8 @@ export class Field {
     const stream = this.stream.withFilter(filter);
     return stream
       .fields()
-      .then(
-        fields =>
-          fields.filter(field => field.toString() === this.toString())[0]
+      .then(fields =>
+        fields.find(field => field.pathString() === this.pathString())
       );
   }
 
