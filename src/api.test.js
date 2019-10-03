@@ -65,7 +65,6 @@ test('Client#streams 404', () => {
 test('Client#patterns', () => {
   let client = mockClient('/patterns', [
     {
-      anonymous: false,
       created: '2019-08-08T18:14:19.131384517Z',
       description: '',
       name: 'high-humidity',
@@ -125,7 +124,6 @@ test('Client#pattern named neoflare', () => {
 test('Client#views', () => {
   let client = mockClient(`/views`, [
     {
-      anonymous: false,
       created: '2019-08-28T17:36:37.951819011Z',
       description: 'hi',
       name: 'some-dew',
