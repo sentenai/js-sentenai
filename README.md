@@ -16,9 +16,8 @@ $ npm install --save --save-exact sentenai
 const Sentenai = require('sentenai');
 const sentenai = new Sentenai.Client({ auth_key: '' });
 
-const spans = await sentenai
-  .pattern('my-stream-id when temp > 82.3')
-  .then(pattern => pattern.search());
+const pattern = await sentenai.pattern('my-stream-id when temp > 82.3');
+const spans = await pattern.search();
 ```
 
 View [our docs](http://docs.sentenai.com/) to learn more.
