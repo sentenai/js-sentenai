@@ -97,7 +97,7 @@ test('Client#pattern neoflare', () => {
     )
   );
 
-  return client.pattern(query).then(pattern => {
+  return client.savePattern(query).then(pattern => {
     expect(pattern.query).toEqual(query);
     expect(pattern.name).toEqual(loc);
     expect(pattern.anonymous).toEqual(true);
@@ -113,7 +113,7 @@ test('Client#pattern named neoflare', () => {
     new Response({ pattern: query }, { status: 201 })
   );
 
-  return client.pattern(query, name).then(pattern => {
+  return client.savePattern(query, name).then(pattern => {
     expect(pattern.query).toEqual(query);
     expect(pattern.name).toEqual(name);
     expect(pattern.anonymous).toEqual(false);

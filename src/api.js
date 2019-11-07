@@ -78,7 +78,16 @@ export default class Client {
       );
   }
 
-  pattern(pattern, name = '', description = '') {
+  getPattern(name) {
+    return this.fetch(`/patterns/${name}`)
+      .then(getJSON)
+      .then(
+        ({ name, created, streams, query, description }) =>
+          new Pattern(this, { name, description, query, created })
+      );
+  }
+
+  savePattern(pattern, name = '', description = '') {
     const url = name ? `/patterns/${encodeURIComponent(name)}` : '/patterns';
     return this.fetch(url, {
       body: JSON.stringify({
@@ -452,7 +461,7 @@ export class Pattern {
   }
 
   saveAs(name, description = '') {
-    return this._client.pattern(this.query, name, description);
+    return this._client.savePattern(this.query, name, description);
   }
 
   delete() {
