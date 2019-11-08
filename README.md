@@ -16,7 +16,7 @@ $ npm install --save --save-exact sentenai
 const Sentenai = require('sentenai');
 const sentenai = new Sentenai.Client({ auth_key: '' });
 
-const pattern = await sentenai.pattern('my-stream-id when temp > 82.3');
+const pattern = await sentenai.savePattern('my-stream-id when temp > 82.3');
 const spans = await pattern.search();
 ```
 
@@ -42,7 +42,7 @@ To evaluate current testing coverage:
 ```shell
 $ npm test -- --coverage
 
-# generate html report in /coverage
+# generate html report in coverage/
 $ npm test -- --coverage --coverageReporters "html"
 $ open coverage/index.html
 ```
