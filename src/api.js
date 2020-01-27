@@ -376,6 +376,11 @@ export class Stream {
   }
 
   // TODO: get, put
+  delete() {
+    return this._client
+      .fetch(`/streams/${this.name}`, { method: 'DELETE' })
+      .then(handleStatusCode);
+  }
 
   stats(field, opts) {
     return this._client.stats(this, field, opts);
