@@ -50,7 +50,6 @@ export default class Client {
       body: JSON.stringify(body)
     }).then(res => {
       handleStatusCode(res);
-      const viewId = res.headers.get('Location');
       return new View(this, {
         name: name || res.headers.get('Location'),
         description,
