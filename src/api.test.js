@@ -121,6 +121,33 @@ test('Client#pattern named neoflare', () => {
   });
 });
 
+test('Client#pattern anonymous flare-core', () => {
+  let loc = 'abc';
+  let query = {
+    select: {
+      path: ['event', 'humidity'],
+      op: '>',
+      arg: { type: 'double', val: 0.5 },
+      stream: { name: 'weather' },
+      type: 'span'
+    }
+  };
+  let client = mockClient(
+    `/patterns`,
+    new Response(
+      { pattern: query },
+      { status: 201, headers: { Location: loc } }
+    )
+  );
+
+  return client.savePattern(query).then(pattern => {
+    expect(pattern.query).toEqual(query);
+    expect(pattern.name).toEqual(loc);
+    expect(pattern.anonymous).toEqual(true);
+    expect(pattern.created).toBeInstanceOf(Date);
+  });
+});
+
 test('Client#views', () => {
   let client = mockClient(`/views`, [
     {

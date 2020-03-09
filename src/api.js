@@ -90,7 +90,7 @@ export default class Client {
     const url = name ? `/patterns/${encodeURIComponent(name)}` : '/patterns';
     return this.fetch(url, {
       body: JSON.stringify({
-        pattern: typeof pattern === 'string' ? pattern : ast(pattern),
+        pattern: pattern.ast || pattern,
         description: name ? description : undefined
       }),
       method: 'POST'
