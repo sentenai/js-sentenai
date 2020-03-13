@@ -258,6 +258,27 @@ export default class Client {
     return this.fetch(url).then(getJSON);
   }
 
+  uniques(stream, field, opts = {}) {
+    const { start, end } = opts;
+    const base = `/streams/${stream.name}/uniques/${field}`;
+
+    const params = {};
+    if (start) {
+      params.start = start.toISOString();
+    }
+    if (end) {
+      params.end = end.toISOString();
+    }
+    if (stream.filter) {
+      params.filters = base64(stream.filter.ast);
+    }
+
+    const url = Object.keys(params).length
+      ? `${base}?${queryString(params)}`
+      : base;
+    return this.fetch(url).then(getJSON);
+  }
+
   delete(stream, eid) {
     const url = `/streams/${stream.name}/events/${eid}`;
     return this.fetch(url, {
@@ -386,6 +407,10 @@ export class Stream {
     return this._client.stats(this, field, opts);
   }
 
+  uniques(field, opts) {
+    return this._client.uniques(this, field, opts);
+  }
+
   events(opts = {}) {
     return this._client.events(this, opts);
   }
@@ -418,6 +443,10 @@ export class Field {
 
   stats(opts) {
     return this.stream.stats(this.pathString(), opts);
+  }
+
+  uniques(opts) {
+    return this.stream.uniques(this.pathString(), opts);
   }
 
   pathString() {
