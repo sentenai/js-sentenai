@@ -16,7 +16,7 @@ const {
 const { Stream } = require('../src/api.js');
 
 function stream(name, filters) {
-  return new Stream(null, name, filters);
+  return new Stream(null, name, {}, filters);
 }
 
 const expectAST = a => expect(JSON.parse(ast(a)));

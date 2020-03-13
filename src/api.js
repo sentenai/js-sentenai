@@ -148,7 +148,9 @@ export default class Client {
     const query = Object.keys(params).length ? '?' + queryString(params) : '';
     return this.fetch(`/streams${query}`)
       .then(getJSON)
-      .then(streamList => streamList.map(s => new Stream(this, s.name)));
+      .then(streamList =>
+        streamList.map(s => new Stream(this, s.name, s.meta))
+      );
   }
 
   fields(stream) {
@@ -330,13 +332,14 @@ export default class Client {
   }
 
   stream(name, filters) {
-    return new Stream(this, name, filters);
+    return new Stream(this, name, null, filters);
   }
 }
 
 export class Stream {
-  constructor(client, name, filter) {
+  constructor(client, name, meta, filter) {
     this.name = name;
+    this.meta = meta;
     this._client = client;
     this.filter =
       filter && filter.constructor === Object ? new Filter(filter) : filter;
@@ -368,18 +371,18 @@ export class Stream {
   }
 
   withFilter(filter) {
-    return new Stream(this._client, this.name, filter);
+    return new Stream(this._client, this.name, this.meta, filter);
   }
 
   when(moment) {
     if (moment instanceof Switch) {
       return new BoundSwitch(
-        new Stream(this._client, this.name, this.filter),
+        new Stream(this._client, this.name, this.meta, this.filter),
         moment
       );
     } else {
       return makeSpans(
-        new Stream(this._client, this.name, this.filter),
+        new Stream(this._client, this.name, this.meta, this.filter),
         moment,
         ['event']
       );

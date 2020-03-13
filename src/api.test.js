@@ -44,6 +44,7 @@ test('Client#streams', () => {
     expect(streams).toHaveLength(1);
     streams.forEach(stream => {
       expect(stream).toBeInstanceOf(Stream);
+      expect(stream.meta.city).toEqual('Boston');
     });
   });
 });
