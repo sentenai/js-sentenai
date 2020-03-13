@@ -581,7 +581,7 @@ function handleStatusCode(res) {
   } else if (code === 404) {
     throw new NotFound();
   } else if (code >= 400) {
-    throw new APIError(res);
+    throw new APIError(`${res.status} ${res.statusText}`);
   }
 }
 
