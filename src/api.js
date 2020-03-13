@@ -366,6 +366,18 @@ export class Stream {
       });
   }
 
+  setMeta(meta) {
+    return this._client
+      .fetch(`/streams/${this.name}/metadata`, {
+        method: 'PUT',
+        body: JSON.stringify(meta)
+      })
+      .then(res => {
+        handleStatusCode(res);
+        return new Stream(this._client, this.name, meta, this.filter);
+      });
+  }
+
   upload(event, opts = {}) {
     this._client.upload(this, event, opts);
   }
