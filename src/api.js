@@ -197,7 +197,7 @@ export default class Client {
           return {
             event,
             id: res.headers.get('location'),
-            ts: res.headers.get('timestamp')
+            ts: new Date(res.headers.get('timestamp'))
           };
         });
       } else {
@@ -411,7 +411,11 @@ export class Stream {
     return this._client.values(this);
   }
 
-  // TODO: get, put
+  // TODO: put
+  get(eid) {
+    return this._client.get(this, eid);
+  }
+
   delete() {
     return this._client
       .fetch(`/streams/${this.name}`, { method: 'DELETE' })

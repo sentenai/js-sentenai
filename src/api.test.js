@@ -336,6 +336,52 @@ test('Stream#upload', () => {
   });
 });
 
+test('Stream#get', () => {
+  let name = 'big-data';
+  let client = mockClient(`/streams/${name}`, [
+    {
+      id: 'abc123',
+      path: ['some', 'field'],
+      ts: '2020-03-15T19:49:52.156781851Z',
+      value: 'value'
+    }
+  ]);
+  let stream = client.stream(name);
+  return stream.get().then(fields => {
+    expect(fields).toEqual([
+      {
+        id: 'abc123',
+        path: ['some', 'field'],
+        ts: '2020-03-15T19:49:52.156781851Z',
+        value: 'value'
+      }
+    ]);
+  });
+});
+
+test('Stream#get an event', () => {
+  let name = 'big-data';
+  let id = 'abc123';
+  let data = {
+    some: { field: 'value' }
+  };
+  let ts = new Date();
+  let client = mockClient(
+    `/streams/${name}/events/${id}`,
+    new Response(JSON.stringify(data), {
+      headers: { Location: id, timestamp: ts.toISOString() }
+    })
+  );
+  let stream = client.stream(name);
+  return stream.get(id).then(event => {
+    expect(event).toEqual({
+      id,
+      ts,
+      event: data
+    });
+  });
+});
+
 /*
   ~~ Field ~~
 */
