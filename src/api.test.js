@@ -323,6 +323,19 @@ test('Stream#events', () => {
   });
 });
 
+test('Stream#upload', () => {
+  let name = 'big-data';
+  let loc = 'abc';
+  let client = mockClient(
+    `/streams/${name}/events`,
+    new Response('', { status: 201, headers: { Location: loc } })
+  );
+  let stream = client.stream(name);
+  return stream.upload({ arbitrary: 'event' }).then(id => {
+    expect(id).toEqual(loc);
+  });
+});
+
 /*
   ~~ Field ~~
 */

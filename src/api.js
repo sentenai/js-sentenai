@@ -379,7 +379,7 @@ export class Stream {
   }
 
   upload(event, opts = {}) {
-    this._client.upload(this, event, opts);
+    return this._client.upload(this, event, opts);
   }
 
   withFilter(filter) {
