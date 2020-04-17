@@ -382,6 +382,35 @@ export class Stream {
       });
   }
 
+  patchMeta(meta) {
+    return this._client
+      .fetch(`/streams/${this.name}/metadata`, {
+        method: 'PATCH',
+        body: JSON.stringify(meta)
+      })
+      .then(res => {
+        handleStatusCode(res);
+        return new Stream(this._client, this.name, meta, this.filter);
+      });
+  }
+
+  getMetaKey(key) {
+    return this._client
+      .fetch(`/streams/${this.name}/metadata/${key}`)
+      .then(getJSON);
+  }
+
+  setMetaKey(key, value) {
+    return this._client
+      .fetch(`/streams/${this.name}/metadata/${key}`, {
+        method: 'PUT',
+        body: JSON.stringify(value)
+      })
+      .then(res => {
+        handleStatusCode(res);
+      });
+  }
+
   upload(event, opts = {}) {
     return this._client.upload(this, event, opts);
   }
