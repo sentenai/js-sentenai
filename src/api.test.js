@@ -382,6 +382,19 @@ test('Stream#get an event', () => {
   });
 });
 
+test('Stream#getMeta gets metadata', () => {
+  let name = 'sensor';
+  let client = mockClient(`/streams/${name}/metadata`, {
+    reading: 123,
+    msg: 'hello there'
+  });
+  let stream = client.stream(name);
+  return stream.getMeta().then(metadata => {
+    expect(metadata.reading).toEqual(123);
+    expect(metadata.msg).toEqual('hello there');
+  });
+});
+
 /*
   ~~ Field ~~
 */

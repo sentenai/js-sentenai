@@ -366,6 +366,10 @@ export class Stream {
       });
   }
 
+  getMeta() {
+    return this._client.fetch(`/streams/${this.name}/metadata`).then(getJSON);
+  }
+
   setMeta(meta) {
     return this._client
       .fetch(`/streams/${this.name}/metadata`, {
