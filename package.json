@@ -36,7 +36,7 @@
   "devDependencies": {
     "@babel/core": "7.9.0",
     "@babel/preset-env": "7.9.5",
-    "babel-jest": "25.3.0",
+    "babel-jest": "25.5.1",
     "fetch-mock": "9.4.0",
     "jest": "25.3.0",
     "rollup": "2.7.3",
