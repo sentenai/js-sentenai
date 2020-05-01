@@ -39,7 +39,7 @@
     "babel-jest": "25.3.0",
     "fetch-mock": "9.4.0",
     "jest": "25.3.0",
-    "rollup": "2.7.3",
+    "rollup": "2.7.6",
     "rollup-plugin-babel": "4.4.0"
   }
 }
