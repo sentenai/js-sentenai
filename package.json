@@ -34,12 +34,12 @@
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
-    "@babel/core": "7.9.0",
-    "@babel/preset-env": "7.9.5",
-    "babel-jest": "25.3.0",
+    "@babel/core": "7.9.6",
+    "@babel/preset-env": "7.9.6",
+    "babel-jest": "26.0.1",
     "fetch-mock": "9.4.0",
-    "jest": "25.3.0",
-    "rollup": "2.7.3",
+    "jest": "26.0.1",
+    "rollup": "2.7.6",
     "rollup-plugin-babel": "4.4.0"
   }
 }
