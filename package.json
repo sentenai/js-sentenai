@@ -37,9 +37,9 @@
     "@babel/core": "7.9.6",
     "@babel/preset-env": "7.9.6",
     "babel-jest": "26.0.1",
-    "fetch-mock": "9.9.0",
+    "fetch-mock": "9.10.1",
     "jest": "26.0.1",
-    "rollup": "2.10.2",
+    "rollup": "2.10.9",
     "rollup-plugin-babel": "4.4.0"
   }
 }
