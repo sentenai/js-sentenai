@@ -225,7 +225,7 @@ test('Client#view', () => {
   });
 });
 
-test('Client#get stream 404', () => {
+test('Stream#get 404', () => {
   let name = 'hello';
   let client = mockClient(
     `/streams/${name}`,
@@ -233,8 +233,36 @@ test('Client#get stream 404', () => {
   );
 
   let stream = client.stream(name);
-  stream.create().catch(err => {
+  stream.get().catch(err => {
     expect(err).toBeInstanceOf(errors.NotFound);
+  });
+});
+
+test('Stream#create', () => {
+  let name = 'hello';
+  let client = mockClient(
+    (url, { headers, method }) =>
+      method === 'POST' && url === `/streams/${name}` && headers.t0 === 0,
+    new Response('', { status: 201 })
+  );
+
+  let stream = client.stream(name);
+  stream.create(new Date(0)).then(s => {
+    expect(s.name).toEqual(stream.name);
+  });
+});
+
+test('Stream#ensureExistence', () => {
+  let name = 'hello';
+  let client = mockClient(
+    (url, { headers, method }) =>
+      method === 'PUT' && url === `/streams/${name}` && headers.t0 === 0,
+    new Response('', { status: 201 })
+  );
+
+  let stream = client.stream(name);
+  stream.ensureExistence(new Date(0)).then(s => {
+    expect(s.name).toEqual(stream.name);
   });
 });
 

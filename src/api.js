@@ -354,11 +354,31 @@ export class Stream {
     const headers = {};
     if (typeof t0 === 'number') {
       headers.t0 = t0;
+    } else if (t0 instanceof Date) {
+      headers.t0 = t0.getTime();
     }
     return this._client
       .fetch(`/streams/${this.name}`, {
         headers,
         method: 'POST'
+      })
+      .then(res => {
+        handleStatusCode(res);
+        return this;
+      });
+  }
+
+  ensureExistence(t0) {
+    const headers = {};
+    if (typeof t0 === 'number') {
+      headers.t0 = t0;
+    } else if (t0 instanceof Date) {
+      headers.t0 = t0.getTime();
+    }
+    return this._client
+      .fetch(`/streams/${this.name}`, {
+        headers,
+        method: 'PUT'
       })
       .then(res => {
         handleStatusCode(res);
