@@ -77,13 +77,19 @@ export default class Client {
       );
   }
 
-  getPattern(name) {
-    return this.fetch(`/patterns/${name}`)
-      .then(getJSON)
-      .then(
-        ({ name, created, streams, query, description }) =>
-          new Pattern(this, { name, description, query, created })
+  getPattern(name_) {
+    return this.fetch(`/patterns/${name_}`).then(res => {
+      return getJSON(res).then(
+        ({ name, streams, query, description, created }) =>
+          new Pattern(this, {
+            name: name || name_,
+            description,
+            query,
+            created: created || res.headers.get('Date'),
+            anonymous: !created
+          })
       );
+    });
   }
 
   savePattern(pattern, name = '', description = '') {

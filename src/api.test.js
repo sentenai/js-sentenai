@@ -149,6 +149,37 @@ test('Client#pattern anonymous flare-core', () => {
   });
 });
 
+test('Stream#getPattern for anonymous pattern', () => {
+  let id = '6sJ7lC2As5irhsaTGNcpe2w2uCYDp1v4';
+  let client = mockClient(`/patterns/${id}`, {
+    query: "weather when ('temp' > 80.0)",
+    streams: [{ name: 'weather' }]
+  });
+  return client.getPattern(id).then(pattern => {
+    expect(typeof pattern.query).toEqual('string');
+    expect(pattern.name).toEqual(id);
+    expect(pattern.anonymous).toEqual(true);
+    expect(pattern.created).toBeInstanceOf(Date);
+  });
+});
+
+test('Stream#getPattern for named pattern', () => {
+  let name = 'Hot';
+  let client = mockClient(`/patterns/${name}`, {
+    created: '2020-05-28T16:06:09.752846996Z',
+    name,
+    streams: [{ name: 'weather' }],
+    query: "weather when ('temp' > 80.0)",
+    description: ''
+  });
+  return client.getPattern(name).then(pattern => {
+    expect(typeof pattern.query).toEqual('string');
+    expect(pattern.name).toEqual(name);
+    expect(pattern.anonymous).toEqual(false);
+    expect(pattern.created).toBeInstanceOf(Date);
+  });
+});
+
 test('Client#views', () => {
   let client = mockClient(`/views`, [
     {
