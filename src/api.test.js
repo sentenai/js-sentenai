@@ -26,7 +26,7 @@ test('create client with trailing /', () => {
 test('Client#ping', () => {
   return mockClient('/', 200)
     .ping()
-    .then(res => {
+    .then((res) => {
       expect(res).toBe(undefined);
     });
 });
@@ -40,9 +40,9 @@ test('Client#streams', () => {
       name: 'weather'
     }
   ]);
-  return client.streams().then(streams => {
+  return client.streams().then((streams) => {
     expect(streams).toHaveLength(1);
-    streams.forEach(stream => {
+    streams.forEach((stream) => {
       expect(stream).toBeInstanceOf(Stream);
       expect(stream.meta.city).toEqual('Boston');
     });
@@ -51,14 +51,14 @@ test('Client#streams', () => {
 
 test('Client#streams 403', () => {
   let client = mockClient('/streams', new Response({}, { status: 403 }));
-  return client.streams().catch(err => {
+  return client.streams().catch((err) => {
     expect(err).toBeInstanceOf(errors.AuthenticationError);
   });
 });
 
 test('Client#streams 404', () => {
   let client = mockClient('/streams', new Response({}, { status: 404 }));
-  return client.streams().catch(err => {
+  return client.streams().catch((err) => {
     expect(err).toBeInstanceOf(errors.NotFound);
   });
 });
@@ -77,7 +77,7 @@ test('Client#patterns', () => {
       ]
     }
   ]);
-  return client.patterns().then(patterns => {
+  return client.patterns().then((patterns) => {
     expect(patterns).toHaveLength(1);
     let first = patterns[0];
     expect(first).toBeInstanceOf(Pattern);
@@ -98,7 +98,7 @@ test('Client#pattern neoflare', () => {
     )
   );
 
-  return client.savePattern(query).then(pattern => {
+  return client.savePattern(query).then((pattern) => {
     expect(pattern.query).toEqual(query);
     expect(pattern.name).toEqual(loc);
     expect(pattern.anonymous).toEqual(true);
@@ -114,7 +114,7 @@ test('Client#pattern named neoflare', () => {
     new Response({ pattern: query }, { status: 201 })
   );
 
-  return client.savePattern(query, name).then(pattern => {
+  return client.savePattern(query, name).then((pattern) => {
     expect(pattern.query).toEqual(query);
     expect(pattern.name).toEqual(name);
     expect(pattern.anonymous).toEqual(false);
@@ -141,7 +141,7 @@ test('Client#pattern anonymous flare-core', () => {
     )
   );
 
-  return client.savePattern(query).then(pattern => {
+  return client.savePattern(query).then((pattern) => {
     expect(pattern.query).toEqual(query);
     expect(pattern.name).toEqual(loc);
     expect(pattern.anonymous).toEqual(true);
@@ -155,7 +155,7 @@ test('Stream#getPattern for anonymous pattern', () => {
     query: "weather when ('temp' > 80.0)",
     streams: [{ name: 'weather' }]
   });
-  return client.getPattern(id).then(pattern => {
+  return client.getPattern(id).then((pattern) => {
     expect(typeof pattern.query).toEqual('string');
     expect(pattern.name).toEqual(id);
     expect(pattern.anonymous).toEqual(true);
@@ -172,7 +172,7 @@ test('Stream#getPattern for named pattern', () => {
     query: "weather when ('temp' > 80.0)",
     description: ''
   });
-  return client.getPattern(name).then(pattern => {
+  return client.getPattern(name).then((pattern) => {
     expect(typeof pattern.query).toEqual('string');
     expect(pattern.name).toEqual(name);
     expect(pattern.anonymous).toEqual(false);
@@ -212,9 +212,9 @@ test('Client#views', () => {
     }
   ]);
 
-  return client.views().then(views => {
+  return client.views().then((views) => {
     expect(views).toHaveLength(1);
-    views.forEach(view => {
+    views.forEach((view) => {
       expect(view).toBeInstanceOf(View);
       expect(view.anonymous).toEqual(false);
       expect(view.name).toEqual('some-dew');
@@ -225,7 +225,7 @@ test('Client#views', () => {
 
 test('Client#views 403', () => {
   let client = mockClient('/views', new Response({}, { status: 403 }));
-  return client.views().catch(err => {
+  return client.views().catch((err) => {
     expect(err).toBeInstanceOf(errors.AuthenticationError);
   });
 });
@@ -247,7 +247,7 @@ test('Client#view', () => {
     new Response('', { status: 201, headers: { Location: loc } })
   );
 
-  return client.view(viewAst).then(view => {
+  return client.view(viewAst).then((view) => {
     expect(view.name).toEqual(loc);
     expect(view.description).toEqual('');
     expect(view.anonymous).toEqual(true);
@@ -264,7 +264,7 @@ test('Stream#get 404', () => {
   );
 
   let stream = client.stream(name);
-  stream.get().catch(err => {
+  stream.get().catch((err) => {
     expect(err).toBeInstanceOf(errors.NotFound);
   });
 });
@@ -278,7 +278,7 @@ test('Stream#create', () => {
   );
 
   let stream = client.stream(name);
-  stream.create(new Date(0)).then(s => {
+  stream.create(new Date(0)).then((s) => {
     expect(s.name).toEqual(stream.name);
   });
 });
@@ -292,7 +292,7 @@ test('Stream#ensureExistence', () => {
   );
 
   let stream = client.stream(name);
-  stream.ensureExistence(new Date(0)).then(s => {
+  stream.ensureExistence(new Date(0)).then((s) => {
     expect(s.name).toEqual(stream.name);
   });
 });
@@ -316,9 +316,9 @@ test('Stream#fields', () => {
     }
   ]);
   let stream = client.stream(name);
-  return stream.fields().then(fields => {
+  return stream.fields().then((fields) => {
     expect(fields).toHaveLength(2);
-    fields.forEach(f => {
+    fields.forEach((f) => {
       expect(f).toBeInstanceOf(Field);
       expect(f.start).toBeInstanceOf(Date);
     });
@@ -342,9 +342,9 @@ test('Stream#values', () => {
     }
   ]);
   let stream = client.stream(name);
-  return stream.values().then(values => {
+  return stream.values().then((values) => {
     expect(values).toHaveLength(2);
-    values.forEach(value => {
+    values.forEach((value) => {
       expect(value.value).toBeDefined();
       expect(value.id).toBeDefined();
       expect(value.ts).toBeInstanceOf(Date);
@@ -371,7 +371,7 @@ test('Stream#events', () => {
   ]);
 
   let stream = client.stream(name);
-  return stream.events({ limit: 2 }).then(events => {
+  return stream.events({ limit: 2 }).then((events) => {
     expect(events).toHaveLength(2);
     events.forEach(({ duration, event, ts, id }) => {
       expect(duration).toBeNull();
@@ -390,7 +390,7 @@ test('Stream#upload', () => {
     new Response('', { status: 201, headers: { Location: loc } })
   );
   let stream = client.stream(name);
-  return stream.upload({ arbitrary: 'event' }).then(id => {
+  return stream.upload({ arbitrary: 'event' }).then((id) => {
     expect(id).toEqual(loc);
   });
 });
@@ -406,7 +406,7 @@ test('Stream#get', () => {
     }
   ]);
   let stream = client.stream(name);
-  return stream.get().then(fields => {
+  return stream.get().then((fields) => {
     expect(fields).toEqual([
       {
         id: 'abc123',
@@ -432,7 +432,7 @@ test('Stream#get an event', () => {
     })
   );
   let stream = client.stream(name);
-  return stream.get(id).then(event => {
+  return stream.get(id).then((event) => {
     expect(event).toEqual({
       id,
       ts,
@@ -448,7 +448,7 @@ test('Stream#getMeta gets metadata', () => {
     msg: 'hello there'
   });
   let stream = client.stream(name);
-  return stream.getMeta().then(metadata => {
+  return stream.getMeta().then((metadata) => {
     expect(metadata.reading).toEqual(123);
     expect(metadata.msg).toEqual('hello there');
   });
@@ -479,7 +479,7 @@ test('Field#stats', () => {
     start: new Date()
   });
   expect(field.toString()).toEqual(`${name}:${fieldName}`);
-  return field.stats().then(stats => {
+  return field.stats().then((stats) => {
     expect(stats).toMatchObject({
       categorical: {},
       numerical: {
@@ -509,9 +509,9 @@ test('Pattern#search', () => {
     name
   });
 
-  return pattern.search().then(spans => {
+  return pattern.search().then((spans) => {
     expect(spans).toHaveLength(2);
-    spans.forEach(span => {
+    spans.forEach((span) => {
       expect(span.start).toBeInstanceOf(Date);
       expect(span.end).toBeInstanceOf(Date);
     });
@@ -533,7 +533,7 @@ test('Pattern#saveAs', () => {
     query
   });
 
-  return pattern.saveAs(name).then(pattern => {
+  return pattern.saveAs(name).then((pattern) => {
     expect(pattern.name).toEqual(name);
     expect(pattern.anonymous).toEqual(false);
   });
@@ -562,9 +562,9 @@ test('View#data', () => {
     name
   });
 
-  return view.data().then(data => {
+  return view.data().then((data) => {
     expect(data).toHaveLength(1);
-    data.forEach(datum => {
+    data.forEach((datum) => {
       expect(datum.duration).toBeNull();
       expect(datum.event).toMatchObject({});
       expect(typeof datum.id).toBe('string');

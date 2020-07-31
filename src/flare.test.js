@@ -19,7 +19,7 @@ function stream(name, filters) {
   return new Stream(null, name, {}, filters);
 }
 
-const expectAST = a => expect(JSON.parse(ast(a)));
+const expectAST = (a) => expect(JSON.parse(ast(a)));
 
 test('select span', () => {
   const s = stream('S');
@@ -244,10 +244,7 @@ test('relative span', () => {
     select()(
       or(
         s.when({ x: true }).min({ years: 1, months: 1 }),
-        t
-          .when({ x: true })
-          .after({ minutes: 11 })
-          .within({ seconds: 13 })
+        t.when({ x: true }).after({ minutes: 11 }).within({ seconds: 13 })
       ).max({ weeks: 1 })
     )
   ).toEqual({

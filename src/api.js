@@ -48,7 +48,7 @@ export default class Client {
     return this.fetch(url, {
       method: 'POST',
       body: JSON.stringify(body)
-    }).then(res => {
+    }).then((res) => {
       handleStatusCode(res);
       return new View(this, {
         name: name || res.headers.get('Location'),
@@ -63,7 +63,7 @@ export default class Client {
     // name, desc, containing, limit
     return this.fetch(`/views?${queryString(opts)}`)
       .then(getJSON)
-      .then(list =>
+      .then((list) =>
         list.map(
           ({ name, description, streams, view, anonymous, created }) =>
             new View(this, {
@@ -78,7 +78,7 @@ export default class Client {
   }
 
   getPattern(name_) {
-    return this.fetch(`/patterns/${name_}`).then(res => {
+    return this.fetch(`/patterns/${name_}`).then((res) => {
       return getJSON(res).then(
         ({ name, streams, query, description, created }) =>
           new Pattern(this, {
@@ -100,7 +100,7 @@ export default class Client {
         description: name ? description : undefined
       }),
       method: 'POST'
-    }).then(res => {
+    }).then((res) => {
       if (res.status === 201) {
         return new Pattern(this, {
           name: name || res.headers.get('Location'),
@@ -110,7 +110,7 @@ export default class Client {
           created: res.headers.get('Date')
         });
       } else if (res.status === 400) {
-        return res.json().then(body => {
+        return res.json().then((body) => {
           throw new SentenaiException(body.message);
         });
       } else {
@@ -122,7 +122,7 @@ export default class Client {
   patterns(opts = {}) {
     return this.fetch(`/patterns?${queryString(opts)}`)
       .then(getJSON)
-      .then(list =>
+      .then((list) =>
         list.map(
           ({ name, description, query, anonymous, created }) =>
             new Pattern(this, {
@@ -154,8 +154,8 @@ export default class Client {
     const query = Object.keys(params).length ? '?' + queryString(params) : '';
     return this.fetch(`/streams${query}`)
       .then(getJSON)
-      .then(streamList =>
-        streamList.map(s => new Stream(this, s.name, s.meta))
+      .then((streamList) =>
+        streamList.map((s) => new Stream(this, s.name, s.meta))
       );
   }
 
@@ -163,8 +163,8 @@ export default class Client {
     const query = stream.filter ? '?filters=' + base64(stream.filter.ast) : '';
     return this.fetch(`/streams/${stream.name}/fields${query}`)
       .then(getJSON)
-      .then(fields => {
-        return fields.map(f => ({
+      .then((fields) => {
+        return fields.map((f) => ({
           id: f.id,
           path: f.path,
           start: new Date(f.start)
@@ -183,8 +183,8 @@ export default class Client {
     const query = Object.keys(params).length ? '?' + queryString(params) : '';
     return this.fetch(`/streams/${stream.name}${query}`)
       .then(getJSON)
-      .then(values => {
-        return values.map(v => ({
+      .then((values) => {
+        return values.map((v) => ({
           id: v.id,
           path: v.path,
           value: v.value,
@@ -197,9 +197,9 @@ export default class Client {
     const base = `/streams/${stream.name}`;
     const url = eid ? `${base}/events/${eid}` : base;
 
-    return this.fetch(url).then(res => {
+    return this.fetch(url).then((res) => {
       if (eid) {
-        return getJSON(res).then(event => {
+        return getJSON(res).then((event) => {
           return {
             event,
             id: res.headers.get('location'),
@@ -229,7 +229,7 @@ export default class Client {
         headers,
         method: 'PUT',
         body: JSON.stringify(event)
-      }).then(res => {
+      }).then((res) => {
         handleStatusCode(res);
         return id;
       });
@@ -238,7 +238,7 @@ export default class Client {
         headers,
         method: 'POST',
         body: JSON.stringify(event)
-      }).then(res => {
+      }).then((res) => {
         handleStatusCode(res);
         return res.headers.get('location');
       });
@@ -329,8 +329,8 @@ export default class Client {
     const url = `/streams/${stream.name}/events?${queryString(params)}`;
     return this.fetch(url)
       .then(getJSON)
-      .then(events =>
-        events.map(e => ({
+      .then((events) =>
+        events.map((e) => ({
           ...e,
           ts: new Date(e.ts)
         }))
@@ -368,7 +368,7 @@ export class Stream {
         headers,
         method: 'POST'
       })
-      .then(res => {
+      .then((res) => {
         handleStatusCode(res);
         return this;
       });
@@ -386,7 +386,7 @@ export class Stream {
         headers,
         method: 'PUT'
       })
-      .then(res => {
+      .then((res) => {
         handleStatusCode(res);
         return this;
       });
@@ -402,7 +402,7 @@ export class Stream {
         method: 'PUT',
         body: JSON.stringify(meta)
       })
-      .then(res => {
+      .then((res) => {
         handleStatusCode(res);
         return new Stream(this._client, this.name, meta, this.filter);
       });
@@ -414,7 +414,7 @@ export class Stream {
         method: 'PATCH',
         body: JSON.stringify(meta)
       })
-      .then(res => {
+      .then((res) => {
         handleStatusCode(res);
         return new Stream(this._client, this.name, meta, this.filter);
       });
@@ -432,7 +432,7 @@ export class Stream {
         method: 'PUT',
         body: JSON.stringify(value)
       })
-      .then(res => {
+      .then((res) => {
         handleStatusCode(res);
       });
   }
@@ -463,7 +463,7 @@ export class Stream {
   fields() {
     return this._client
       .fields(this)
-      .then(fields => fields.map(f => new Field(this, f)));
+      .then((fields) => fields.map((f) => new Field(this, f)));
   }
 
   values() {
@@ -514,8 +514,8 @@ export class Field {
     const stream = this.stream.withFilter(filter);
     return stream
       .fields()
-      .then(fields =>
-        fields.find(field => field.pathString() === this.pathString())
+      .then((fields) =>
+        fields.find((field) => field.pathString() === this.pathString())
       );
   }
 
@@ -563,7 +563,7 @@ export class Pattern {
     return this._client
       .fetch(`/patterns/${this.name}/search?${queryString(params)}`)
       .then(getJSON)
-      .then(spans =>
+      .then((spans) =>
         spans.map(({ start, end }) => ({
           start: new Date(start),
           end: new Date(end)
@@ -612,7 +612,7 @@ export class View {
       .then(getJSON)
       .then(({ streams, events }) => {
         // TODO: ignoring `streams` for now
-        return events.map(e =>
+        return events.map((e) =>
           Object.assign({}, e, {
             ts: new Date(e.ts)
           })
@@ -627,7 +627,7 @@ function base64(obj) {
 
 function queryString(params) {
   return Object.keys(params)
-    .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+    .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
     .join('&');
 }
 
