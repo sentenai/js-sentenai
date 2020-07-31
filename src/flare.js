@@ -112,7 +112,7 @@ class Serial {
   get ast() {
     return {
       type: 'serial',
-      conds: this.sequence.map(a => a.ast)
+      conds: this.sequence.map((a) => a.ast)
     };
   }
 }
@@ -142,7 +142,7 @@ class Par {
   get ast() {
     return {
       type: this.type,
-      conds: this.conds.map(a => a.ast)
+      conds: this.conds.map((a) => a.ast)
     };
   }
 }
@@ -233,7 +233,7 @@ class And {
   get ast() {
     return {
       expr: '&&',
-      args: this.conds.map(a => a.ast)
+      args: this.conds.map((a) => a.ast)
     };
   }
   after(delta) {
@@ -264,7 +264,7 @@ class Or {
   get ast() {
     return {
       expr: '||',
-      args: this.conds.map(a => a.ast)
+      args: this.conds.map((a) => a.ast)
     };
   }
   after(delta) {
@@ -376,8 +376,8 @@ export class BoundSwitch {
       type: 'switch',
       stream: { name: this.stream.name },
       conds: this.switch.conds
-        .map(cond => makeSpans(this.stream, cond, ['event']).ast)
-        .map(span => {
+        .map((cond) => makeSpans(this.stream, cond, ['event']).ast)
+        .map((span) => {
           delete span.stream;
           return span;
         })
@@ -388,7 +388,7 @@ export class BoundSwitch {
 export function select(options) {
   options || (options = {});
 
-  return function() {
+  return function () {
     if (arguments.length === 0) {
       throw new FlareException('select * not supported yet');
     } else if (arguments.length === 1) {
