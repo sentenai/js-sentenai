@@ -37,7 +37,7 @@
     "@babel/core": "7.11.0",
     "@babel/preset-env": "7.11.0",
     "babel-jest": "26.2.2",
-    "fetch-mock": "9.10.5",
+    "fetch-mock": "9.10.7",
     "jest": "26.2.2",
     "rollup": "2.23.0",
     "rollup-plugin-babel": "4.4.0"
