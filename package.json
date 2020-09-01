@@ -34,7 +34,7 @@
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
-    "@babel/core": "7.11.0",
+    "@babel/core": "7.11.5",
     "@babel/preset-env": "7.11.0",
     "babel-jest": "26.2.2",
     "fetch-mock": "9.10.5",
