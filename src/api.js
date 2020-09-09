@@ -61,7 +61,7 @@ export default class Client {
   }
   views(opts = {}) {
     // name, desc, containing, limit
-    return this.fetch(`/views?${queryString(opts)}`)
+    return this.fetch(`/views${queryString(opts)}`)
       .then(getJSON)
       .then((list) =>
         list.map(
@@ -120,7 +120,7 @@ export default class Client {
   }
 
   patterns(opts = {}) {
-    return this.fetch(`/patterns?${queryString(opts)}`)
+    return this.fetch(`/patterns${queryString(opts)}`)
       .then(getJSON)
       .then((list) =>
         list.map(
@@ -151,8 +151,7 @@ export default class Client {
     if (typeof skip === 'number') {
       params.skip = skip;
     }
-    const query = Object.keys(params).length ? '?' + queryString(params) : '';
-    return this.fetch(`/streams${query}`)
+    return this.fetch(`/streams${queryString(params)}`)
       .then(getJSON)
       .then((streamList) =>
         streamList.map((s) => new Stream(this, s.name, s.meta))
@@ -160,8 +159,11 @@ export default class Client {
   }
 
   fields(stream) {
-    const query = stream.filter ? '?filters=' + base64(stream.filter.ast) : '';
-    return this.fetch(`/streams/${stream.name}/fields${query}`)
+    const params = {};
+    if (stream.filter) {
+      params.filters = base64(stream.filter.ast);
+    }
+    return this.fetch(`/streams/${stream.name}/fields${queryString(params)}`)
       .then(getJSON)
       .then((fields) => {
         return fields.map((f) => ({
@@ -180,8 +182,7 @@ export default class Client {
     if (stream.filter) {
       params.filters = base64(stream.filter.ast);
     }
-    const query = Object.keys(params).length ? '?' + queryString(params) : '';
-    return this.fetch(`/streams/${stream.name}${query}`)
+    return this.fetch(`/streams/${stream.name}${queryString(params)}`)
       .then(getJSON)
       .then((values) => {
         return values.map((v) => ({
@@ -259,11 +260,7 @@ export default class Client {
     if (stream.filter) {
       params.filters = base64(stream.filter.ast);
     }
-
-    const url = Object.keys(params).length
-      ? `${base}?${queryString(params)}`
-      : base;
-    return this.fetch(url).then(getJSON);
+    return this.fetch(`${base}${queryString(params)}`).then(getJSON);
   }
 
   uniques(stream, field, opts = {}) {
@@ -281,10 +278,7 @@ export default class Client {
       params.filters = base64(stream.filter.ast);
     }
 
-    const url = Object.keys(params).length
-      ? `${base}?${queryString(params)}`
-      : base;
-    return this.fetch(url).then(getJSON);
+    return this.fetch(`${base}${queryString(params)}`).then(getJSON);
   }
 
   delete(stream, eid) {
@@ -325,8 +319,7 @@ export default class Client {
     if (stream.filter) {
       params.filters = base64(stream.filter.ast);
     }
-
-    const url = `/streams/${stream.name}/events?${queryString(params)}`;
+    const url = `/streams/${stream.name}/events${queryString(params)}`;
     return this.fetch(url)
       .then(getJSON)
       .then((events) =>
@@ -561,7 +554,7 @@ export class Pattern {
       params.timeout = opts.timeout;
     }
     return this._client
-      .fetch(`/patterns/${this.name}/search?${queryString(params)}`)
+      .fetch(`/patterns/${this.name}/search${queryString(params)}`)
       .then(getJSON)
       .then((spans) =>
         spans.map(({ start, end }) => ({
@@ -608,7 +601,7 @@ export class View {
       params.sort = sort;
     }
     return this._client
-      .fetch(`/views/${this.name}/data?${queryString(params)}`)
+      .fetch(`/views/${this.name}/data${queryString(params)}`)
       .then(getJSON)
       .then(({ streams, events }) => {
         // TODO: ignoring `streams` for now
@@ -626,9 +619,10 @@ function base64(obj) {
 }
 
 function queryString(params) {
-  return Object.keys(params)
+  const qs = Object.keys(params)
     .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
     .join('&');
+  return qs ? '?' + qs : '';
 }
 
 function handleStatusCode(res) {
