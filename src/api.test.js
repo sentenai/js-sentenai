@@ -454,6 +454,20 @@ test('Stream#getMeta gets metadata', () => {
   });
 });
 
+test("Stream#move changes a stream's name", () => {
+  let name = 'sensor';
+  let newName = 'heat-sensor';
+  let client = mockClient(
+    (url, { headers, method }) =>
+      method === 'POST' && url === `/streams/${name}/move/${newName}`,
+    new Response('', { status: 204 })
+  );
+  let stream = client.stream(name);
+  return stream.move(newName).then((updated) => {
+    expect(updated.name).toEqual(newName);
+  });
+});
+
 /*
   ~~ Field ~~
 */

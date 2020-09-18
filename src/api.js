@@ -453,6 +453,14 @@ export class Stream {
     }
   }
 
+  move(name) {
+    return this._client
+      .fetch(`/streams/${this.name}/move/${name}`, {
+        method: 'POST'
+      })
+      .then(() => this._client.stream(name));
+  }
+
   fields() {
     return this._client
       .fields(this)
