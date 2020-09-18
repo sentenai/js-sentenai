@@ -430,6 +430,14 @@ export class Stream {
       });
   }
 
+  removeMetaKey(key) {
+    return this._client
+      .fetch(`/streams/${this.name}/metadata/${key}`, { method: 'DELETE' })
+      .then((res) => {
+        handleStatusCode(res);
+      });
+  }
+
   upload(event, opts = {}) {
     return this._client.upload(this, event, opts);
   }

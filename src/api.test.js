@@ -454,6 +454,18 @@ test('Stream#getMeta gets metadata', () => {
   });
 });
 
+test('Stream#removeMetaKey removes the key', () => {
+  let name = 'sensor';
+  let key = 'location';
+  let client = mockClient(
+    (url, { headers, method }) =>
+      method === 'DELETE' && url === `/streams/${name}/metadata/${key}`,
+    new Response('', { status: 204 })
+  );
+  let stream = client.stream(name);
+  return stream.removeMetaKey(key).then(() => {});
+});
+
 test("Stream#move changes a stream's name", () => {
   let name = 'sensor';
   let newName = 'heat-sensor';
