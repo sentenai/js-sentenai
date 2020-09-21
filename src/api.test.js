@@ -155,6 +155,23 @@ test('Client#pattern anonymous flare-core', () => {
   });
 });
 
+test('Client#pattern malformed neoflare', () => {
+  let query = 'ok whan';
+  let errorMessage =
+    'Error in $.pattern: <input>:1:4:\n  |\n1 | ok whan\n  |    ^^^^\nunexpected "whan"\nexpecting "when" or "where"\n';
+  let client = mockClient(`/patterns`, {
+    status: 400,
+    body: {
+      code: 400,
+      message: errorMessage
+    }
+  });
+
+  return client.savePattern(query).catch((err) => {
+    expect(err.message).toBe(errorMessage);
+  });
+});
+
 test('Stream#getPattern for anonymous pattern', () => {
   let id = '6sJ7lC2As5irhsaTGNcpe2w2uCYDp1v4';
   let client = mockClient(`/patterns/${id}`, {

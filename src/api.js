@@ -115,23 +115,16 @@ export default class Client {
         description: name ? description : undefined
       }),
       method: 'POST'
-    }).then((res) => {
-      if (res.status === 201) {
-        return new Pattern(this, {
+    }).then(
+      (res) =>
+        new Pattern(this, {
           name: name || res.headers.get('Location'),
           description,
           query: pattern,
           anonymous: !name,
           created: res.headers.get('Date')
-        });
-      } else if (res.status === 400) {
-        return res.json().then((body) => {
-          throw new SentenaiException(body.message);
-        });
-      } else {
-        return getJSON(res);
-      }
-    });
+        })
+    );
   }
 
   patterns(opts = {}) {
