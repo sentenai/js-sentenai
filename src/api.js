@@ -16,10 +16,26 @@ export default class Client {
         ? trimTrailing('/', config.host)
         : 'https://api.sentenai.com';
 
-    this._fetch =
+    // This is a raw `fetch`, so that we can mock it out in tests.
+    this.__innerFetch =
       typeof window === 'object' && typeof window.fetch === 'function'
         ? window.fetch.bind(window)
         : require('isomorphic-fetch');
+
+    // This fetch throws errors when things go wrong.
+    this._fetch = (url, params) => {
+      return this.__innerFetch(url, params).then((res) => {
+        if (res.ok) {
+          return res;
+        } else if (res.headers.get('Content-Type') === 'application/json') {
+          return res.json().then((body) => {
+            handleStatusCode(res, body);
+          });
+        } else {
+          handleStatusCode(res);
+        }
+      });
+    };
   }
 
   fetch(url, options = {}) {
@@ -39,7 +55,7 @@ export default class Client {
   }
 
   ping() {
-    return this.fetch('/').then(handleStatusCode);
+    return this.fetch('/').then(() => {});
   }
 
   view(view, name = '', description = '') {
@@ -49,7 +65,6 @@ export default class Client {
       method: 'POST',
       body: JSON.stringify(body)
     }).then((res) => {
-      handleStatusCode(res);
       return new View(this, {
         name: name || res.headers.get('Location'),
         description,
@@ -231,7 +246,6 @@ export default class Client {
         method: 'PUT',
         body: JSON.stringify(event)
       }).then((res) => {
-        handleStatusCode(res);
         return id;
       });
     } else {
@@ -240,7 +254,6 @@ export default class Client {
         method: 'POST',
         body: JSON.stringify(event)
       }).then((res) => {
-        handleStatusCode(res);
         return res.headers.get('location');
       });
     }
@@ -285,7 +298,7 @@ export default class Client {
     const url = `/streams/${stream.name}/events/${eid}`;
     return this.fetch(url, {
       method: 'delete'
-    }).then(handleStatusCode);
+    });
   }
 
   destroy(stream) {
@@ -295,7 +308,7 @@ export default class Client {
       headers: {
         'auth-key': this.auth_key
       }
-    }).then(handleStatusCode);
+    });
   }
 
   events(stream, opts = {}) {
@@ -362,7 +375,6 @@ export class Stream {
         method: 'POST'
       })
       .then((res) => {
-        handleStatusCode(res);
         return this;
       });
   }
@@ -380,7 +392,6 @@ export class Stream {
         method: 'PUT'
       })
       .then((res) => {
-        handleStatusCode(res);
         return this;
       });
   }
@@ -396,7 +407,6 @@ export class Stream {
         body: JSON.stringify(meta)
       })
       .then((res) => {
-        handleStatusCode(res);
         return new Stream(this._client, this.name, meta, this.filter);
       });
   }
@@ -408,7 +418,6 @@ export class Stream {
         body: JSON.stringify(meta)
       })
       .then((res) => {
-        handleStatusCode(res);
         return new Stream(this._client, this.name, meta, this.filter);
       });
   }
@@ -420,22 +429,16 @@ export class Stream {
   }
 
   setMetaKey(key, value) {
-    return this._client
-      .fetch(`/streams/${this.name}/metadata/${key}`, {
-        method: 'PUT',
-        body: JSON.stringify(value)
-      })
-      .then((res) => {
-        handleStatusCode(res);
-      });
+    return this._client.fetch(`/streams/${this.name}/metadata/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify(value)
+    });
   }
 
   removeMetaKey(key) {
-    return this._client
-      .fetch(`/streams/${this.name}/metadata/${key}`, { method: 'DELETE' })
-      .then((res) => {
-        handleStatusCode(res);
-      });
+    return this._client.fetch(`/streams/${this.name}/metadata/${key}`, {
+      method: 'DELETE'
+    });
   }
 
   upload(event, opts = {}) {
@@ -485,9 +488,7 @@ export class Stream {
   }
 
   delete() {
-    return this._client
-      .fetch(`/streams/${this.name}`, { method: 'DELETE' })
-      .then(handleStatusCode);
+    return this._client.fetch(`/streams/${this.name}`, { method: 'DELETE' });
   }
 
   stats(field, opts) {
@@ -585,9 +586,7 @@ export class Pattern {
   }
 
   delete() {
-    return this._client
-      .fetch(`/patterns/${this.name}`, { method: 'DELETE' })
-      .then(handleStatusCode);
+    return this._client.fetch(`/patterns/${this.name}`, { method: 'DELETE' });
   }
 }
 
@@ -641,25 +640,22 @@ function queryString(params) {
   return qs ? '?' + qs : '';
 }
 
-function handleStatusCode(res) {
+function handleStatusCode(res, body) {
   const code = res.status;
 
   if (code === 401 || code === 403) {
     throw new AuthenticationError('Invalid API key');
-  } else if (code >= 500) {
-    throw new SentenaiException('Something went wrong');
   } else if (code === 400) {
-    // TODO: pass response body `message` thru
-    throw new BadRequest();
+    throw new BadRequest(body ? body.message : 'Bad request');
   } else if (code === 404) {
-    throw new NotFound();
-  } else if (code >= 400) {
-    throw new APIError(`${res.status} ${res.statusText}`);
+    throw new NotFound(body ? body.message : 'Not found');
+  } else if (code >= 400 && code < 500) {
+    throw new APIError(`${res.status} ${body ? body.message : res.statusText}`);
   }
+  throw new SentenaiException(body ? body.message : 'Something went wrong');
 }
 
 function getJSON(res) {
-  handleStatusCode(res);
   return res.json();
 }
 
