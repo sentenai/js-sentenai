@@ -645,15 +645,14 @@ function handleStatusCode(res, body) {
 
   if (code === 401 || code === 403) {
     throw new AuthenticationError('Invalid API key');
-  } else if (code >= 500) {
-    throw new SentenaiException(body ? body.message : 'Something went wrong');
   } else if (code === 400) {
     throw new BadRequest(body ? body.message : 'Bad request');
   } else if (code === 404) {
     throw new NotFound(body ? body.message : 'Not found');
-  } else if (code >= 400) {
+  } else if (code >= 400 && code < 500) {
     throw new APIError(`${res.status} ${body ? body.message : res.statusText}`);
   }
+  throw new SentenaiException(body ? body.message : 'Something went wrong');
 }
 
 function getJSON(res) {
