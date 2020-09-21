@@ -6,7 +6,7 @@ function mockClient(matcher, response, opts) {
   let client = new Client({
     host: ''
   });
-  client._fetch = fetchMock.sandbox().mock(matcher, response, opts);
+  client.__innerFetch = fetchMock.sandbox().mock(matcher, response, opts);
   return client;
 }
 
@@ -50,17 +50,27 @@ test('Client#streams', () => {
 });
 
 test('Client#streams 403', () => {
-  let client = mockClient('/streams', new Response({}, { status: 403 }));
+  let client = mockClient('/streams', { status: 403, body: { code: 403 } });
   return client.streams().catch((err) => {
     expect(err).toBeInstanceOf(errors.AuthenticationError);
   });
 });
 
-test('Client#streams 404', () => {
-  let client = mockClient('/streams', new Response({}, { status: 404 }));
-  return client.streams().catch((err) => {
-    expect(err).toBeInstanceOf(errors.NotFound);
+test('stream does not exist', () => {
+  let name = 'some-nonsense';
+  let client = mockClient('/streams/' + name, {
+    status: 404,
+    body: {
+      code: 404,
+      message: 'Stream does not exist.'
+    }
   });
+  return client
+    .stream(name)
+    .values()
+    .catch((err) => {
+      expect(err).toBeInstanceOf(errors.NotFound);
+    });
 });
 
 test('Client#patterns', () => {
@@ -90,13 +100,11 @@ test('Client#patterns', () => {
 test('Client#pattern neoflare', () => {
   let query = 'weather when humidity > 0.7';
   let loc = 'abc';
-  let client = mockClient(
-    '/patterns',
-    new Response(
-      { pattern: query },
-      { status: 201, headers: { Location: loc } }
-    )
-  );
+  let client = mockClient('/patterns', {
+    status: 201,
+    headers: { Location: loc },
+    body: { pattern: query }
+  });
 
   return client.savePattern(query).then((pattern) => {
     expect(pattern.query).toEqual(query);
@@ -109,10 +117,10 @@ test('Client#pattern neoflare', () => {
 test('Client#pattern named neoflare', () => {
   let query = 'weather when temp < 32.0';
   let name = 'colddd';
-  let client = mockClient(
-    `/patterns/${name}`,
-    new Response({ pattern: query }, { status: 201 })
-  );
+  let client = mockClient(`/patterns/${name}`, {
+    status: 201,
+    body: { pattern: query }
+  });
 
   return client.savePattern(query, name).then((pattern) => {
     expect(pattern.query).toEqual(query);
@@ -133,13 +141,11 @@ test('Client#pattern anonymous flare-core', () => {
       type: 'span'
     }
   };
-  let client = mockClient(
-    `/patterns`,
-    new Response(
-      { pattern: query },
-      { status: 201, headers: { Location: loc } }
-    )
-  );
+  let client = mockClient(`/patterns`, {
+    status: 201,
+    headers: { Location: loc },
+    body: { pattern: query }
+  });
 
   return client.savePattern(query).then((pattern) => {
     expect(pattern.query).toEqual(query);
@@ -224,7 +230,7 @@ test('Client#views', () => {
 });
 
 test('Client#views 403', () => {
-  let client = mockClient('/views', new Response({}, { status: 403 }));
+  let client = mockClient('/views', { status: 403 });
   return client.views().catch((err) => {
     expect(err).toBeInstanceOf(errors.AuthenticationError);
   });
@@ -242,10 +248,10 @@ test('Client#view', () => {
     }
   };
   let loc = 'abc123';
-  let client = mockClient(
-    '/views',
-    new Response('', { status: 201, headers: { Location: loc } })
-  );
+  let client = mockClient('/views', {
+    status: 201,
+    headers: { Location: loc }
+  });
 
   return client.view(viewAst).then((view) => {
     expect(view.name).toEqual(loc);
@@ -258,10 +264,10 @@ test('Client#view', () => {
 
 test('Stream#get 404', () => {
   let name = 'hello';
-  let client = mockClient(
-    `/streams/${name}`,
-    new Response({ code: 404 }, { status: 404 })
-  );
+  let client = mockClient(`/streams/${name}`, {
+    status: 404,
+    body: { code: 404 }
+  });
 
   let stream = client.stream(name);
   stream.get().catch((err) => {
@@ -274,7 +280,7 @@ test('Stream#create', () => {
   let client = mockClient(
     (url, { headers, method }) =>
       method === 'POST' && url === `/streams/${name}` && headers.t0 === 0,
-    new Response('', { status: 201 })
+    { status: 201 }
   );
 
   let stream = client.stream(name);
@@ -288,7 +294,7 @@ test('Stream#ensureExistence', () => {
   let client = mockClient(
     (url, { headers, method }) =>
       method === 'PUT' && url === `/streams/${name}` && headers.t0 === 0,
-    new Response('', { status: 201 })
+    { status: 201 }
   );
 
   let stream = client.stream(name);
@@ -385,10 +391,10 @@ test('Stream#events', () => {
 test('Stream#upload', () => {
   let name = 'big-data';
   let loc = 'abc';
-  let client = mockClient(
-    `/streams/${name}/events`,
-    new Response('', { status: 201, headers: { Location: loc } })
-  );
+  let client = mockClient(`/streams/${name}/events`, {
+    status: 201,
+    headers: { Location: loc }
+  });
   let stream = client.stream(name);
   return stream.upload({ arbitrary: 'event' }).then((id) => {
     expect(id).toEqual(loc);
@@ -425,12 +431,10 @@ test('Stream#get an event', () => {
     some: { field: 'value' }
   };
   let ts = new Date();
-  let client = mockClient(
-    `/streams/${name}/events/${id}`,
-    new Response(JSON.stringify(data), {
-      headers: { Location: id, timestamp: ts.toISOString() }
-    })
-  );
+  let client = mockClient(`/streams/${name}/events/${id}`, {
+    headers: { Location: id, timestamp: ts.toISOString() },
+    body: data
+  });
   let stream = client.stream(name);
   return stream.get(id).then((event) => {
     expect(event).toEqual({
@@ -460,7 +464,7 @@ test('Stream#removeMetaKey removes the key', () => {
   let client = mockClient(
     (url, { headers, method }) =>
       method === 'DELETE' && url === `/streams/${name}/metadata/${key}`,
-    new Response('', { status: 204 })
+    { status: 204 }
   );
   let stream = client.stream(name);
   return stream.removeMetaKey(key).then(() => {});
@@ -472,7 +476,7 @@ test("Stream#move changes a stream's name", () => {
   let client = mockClient(
     (url, { headers, method }) =>
       method === 'POST' && url === `/streams/${name}/move/${newName}`,
-    new Response('', { status: 204 })
+    { status: 204 }
   );
   let stream = client.stream(name);
   return stream.move(newName).then((updated) => {
@@ -548,10 +552,10 @@ test('Pattern#saveAs', () => {
   let name = 'my-pattern';
   let query = 'weather when temp > 0.5';
 
-  let client = mockClient(
-    `/patterns/${name}`,
-    new Response({ pattern: query }, { status: 201 })
-  );
+  let client = mockClient(`/patterns/${name}`, {
+    status: 201,
+    body: { pattern: query }
+  });
 
   let pattern = new Pattern(client, {
     name: 'some-generated-id',
