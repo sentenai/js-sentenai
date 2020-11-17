@@ -31,7 +31,7 @@
   "homepage": "https://github.com/sentenai/js-sentenai#readme",
   "dependencies": {
     "btoa": "1.2.1",
-    "isomorphic-fetch": "^2.2.1"
+    "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "7.12.3",
